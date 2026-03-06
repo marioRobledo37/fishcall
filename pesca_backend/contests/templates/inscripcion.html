@@ -1,0 +1,57 @@
+<h2>Inscripción al concurso</h2>
+
+<label>DNI</label>
+<input type="text" id="dni" onblur="buscarDNI()">
+
+<br><br>
+
+<label>Nombre</label>
+<input type="text" id="first_name">
+
+<br><br>
+
+<label>Apellido</label>
+<input type="text" id="last_name">
+
+<br><br>
+
+<label>Teléfono</label>
+<input type="text" id="phone">
+
+<br><br>
+
+<label>Categoría</label>
+<input type="text" id="category">
+
+<script>
+
+async function buscarDNI(){
+
+    const dni = document.getElementById("dni").value;
+
+    if(!dni){
+        return;
+    }
+
+    const response = await fetch(`/users/buscar-pescador/?dni=${dni}`);
+
+    const data = await response.json();
+
+    if(data.exists){
+
+        document.getElementById("first_name").value = data.first_name;
+        document.getElementById("last_name").value = data.last_name;
+        document.getElementById("phone").value = data.phone;
+        document.getElementById("category").value = data.category;
+
+        alert("Pescador encontrado. Datos cargados automáticamente.");
+
+    }else{
+
+        alert("Pescador nuevo. Complete sus datos.");
+
+    }
+
+}
+
+</script>

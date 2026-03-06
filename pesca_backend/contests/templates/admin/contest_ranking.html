@@ -1,0 +1,122 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<h1>🏆 Ranking - {{ contest.name }}</h1>
+<hr>
+<h2>Cantidad de CM Capturados</h2>
+
+<h3>{{ total_cm }} Centímetros! </h3>
+<hr>
+<hr>
+<h2>🏆 Pieza Mayor</h2>
+
+{% if biggest %}
+<p><strong>Pieza mayor:</strong> {{ biggest.fisher.full_name }} - {{ biggest.length_cm }} cm</p>
+{% endif %}
+
+<hr>
+<hr>
+<h2>🏆 Ranking General por Categoría</h2>
+
+{% for category, fishers in ranking_by_category.items %}
+
+<h3>🏆 Ranking General {{ category }}</h3>
+
+<table border="1" cellpadding="8">
+    <tr>
+        <th>Posición</th>
+        <th>Pescador</th>
+        <th>Puntos</th>
+        <th>Capturas</th>
+    </tr>
+
+    {% for f in fishers %}
+    <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ f.full_name }}</td>
+        <td>{{ f.total_points }}</td>
+        <td>{{ f.total_captures }}</td>
+    </tr>
+    {% endfor %}
+
+</table>
+
+<br>
+
+{% endfor %}
+<hr>
+<hr>
+<h2>🏆 Ranking General</h2>
+
+<table border="1" cellpadding="8">
+    <tr>
+        <th>Posición</th>
+        <th>Pescador</th>
+        <th>Puntos</th>
+        <th>Capturas</th>
+    </tr>
+
+    {% for f in ranking %}
+    <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ f.full_name }}</td>
+        <td>{{ f.total_points }}</td>
+        <td>{{ f.total_captures }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<hr>
+<h2>🏆 Ranking por Peña u Organización</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Posición</th>
+            <th>Organización</th>
+            <th>Puntos</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for org in ranking_org %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ org.name }}</td>
+            <td>{{ org.points }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="3">Sin datos</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<hr>
+<h2>🏆 Ranking Interno por Peña u Organización</h2>
+
+{% for org, fishers in ranking_by_org.items %}
+    <h3>{{ org }}</h3>
+
+    <table border="1" cellpadding="8">
+        <tr>
+            <th>Posición</th>
+            <th>Pescador</th>
+            <th>Puntos</th>
+            <th>Capturas</th>
+        </tr>
+
+        {% for f in fishers %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ f.full_name }}</td>
+            <td>{{ f.total_points }}</td>
+            <td>{{ f.total_captures }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <br>
+{% endfor %}
+
+{% endblock %}

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>{{ contest.name }}</title>
+
+<style>
+
+body{
+    background:#0b132b;
+    color:white;
+    font-family:Arial;
+    text-align:center;
+}
+
+h1{ font-size:42px; }
+
+.container{
+    width:90%;
+    margin:auto;
+}
+
+/* TARJETAS */
+
+.card{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:#1c2541;
+    border-radius:12px;
+    padding:18px;
+    margin:12px 0;
+    box-shadow:0px 4px 20px rgba(0,0,0,0.4);
+}
+
+.left{
+    display:flex;
+    align-items:center;
+}
+
+.photo{
+    width:70px;
+    height:70px;
+    border-radius:50%;
+    margin-right:15px;
+    object-fit:cover;
+}
+
+.name{
+    font-size:26px;
+    font-weight:bold;
+}
+
+.species{
+    font-size:18px;
+    color:#a9bcd0;
+}
+
+.measure{
+    font-size:34px;
+    font-weight:bold;
+}
+
+.time{
+    font-size:18px;
+}
+
+/* BANNER NUEVA CAPTURA */
+
+#banner{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.92);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    z-index:999;
+    animation:fadein 0.5s;
+}
+
+.banner-photo{
+    width:180px;
+    height:180px;
+    border-radius:50%;
+    object-fit:cover;
+    margin-bottom:20px;
+}
+
+.banner-name{
+    font-size:60px;
+    font-weight:bold;
+}
+
+.banner-measure{
+    font-size:90px;
+    color:#5bc0be;
+    margin-top:10px;
+}
+
+.banner-species{
+    font-size:34px;
+    margin-top:10px;
+}
+
+.banner-club{
+    margin-top:15px;
+    font-size:24px;
+}
+
+.club-logo{
+    height:60px;
+    margin-top:10px;
+}
+
+@keyframes fadein{
+    from{opacity:0}
+    to{opacity:1}
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>🎣 {{ contest.name }}</h1>
+<h2>Capturas en vivo</h2>
+
+{% if captures %}
+<div id="banner">
+
+<div style="font-size:40px;margin-bottom:20px;">
+🔥 NUEVA CAPTURA
+</div>
+
+<!-- FOTO PESCADOR -->
+
+{% if captures.0.fisher.photo %}
+<img class="banner-photo" src="{{ captures.0.fisher.photo.url }}">
+{% else %}
+<div class="banner-photo" style="background:#5bc0be;"></div>
+{% endif %}
+
+<!-- NOMBRE -->
+
+<div class="banner-name">
+{{ captures.0.fisher.get_full_name }}
+</div>
+
+<!-- CLUB -->
+
+{% if captures.0.fisher.organization %}
+<div class="banner-club">
+
+{% if captures.0.fisher.organization.logo %}
+<img class="club-logo" src="{{ captures.0.fisher.organization.logo.url }}">
+{% endif %}
+
+<div>
+{{ captures.0.fisher.organization.name }}
+</div>
+
+</div>
+{% endif %}
+
+<!-- ESPECIE -->
+
+<div class="banner-species">
+🐟 {{ captures.0.species|default:"Especie" }}
+</div>
+
+<!-- MEDIDA -->
+
+<div class="banner-measure">
+{{ captures.0.length_cm }} cm
+</div>
+
+</div>
+{% endif %}
+
+<div class="container">
+
+{% for c in captures %}
+
+<div class="card">
+
+<div class="left">
+
+{% if c.fisher.photo %}
+<img class="photo" src="{{ c.fisher.photo.url }}">
+{% else %}
+<div class="photo" style="background:#5bc0be;"></div>
+{% endif %}
+
+<div>
+
+<div class="name">
+{{ c.fisher.get_full_name }}
+</div>
+
+<div class="species">
+🐟 {{ c.species|default:"Especie no especificada" }}
+</div>
+
+</div>
+
+</div>
+
+<div class="measure">
+{{ c.length_cm }} cm
+</div>
+
+<div class="time">
+{{ c.created_at|date:"H:i" }}
+</div>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+<script>
+
+/* ocultar banner después de 3 segundos */
+
+setTimeout(function(){
+
+let banner = document.getElementById("banner");
+
+if(banner){
+    banner.style.display = "none";
+}
+
+},5000);
+
+
+/* refrescar página */
+
+setTimeout(function(){
+location.reload();
+},10000);
+
+</script>
+
+</body>
+</html>

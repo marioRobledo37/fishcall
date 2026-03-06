@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta charset="utf-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+
+body{
+background:#0b132b;
+color:white;
+font-family:Arial;
+padding:30px;
+}
+
+h1{
+text-align:center;
+}
+
+.grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:30px;
+}
+
+.card{
+background:#1c2541;
+padding:20px;
+border-radius:12px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+td,th{
+padding:10px;
+border-bottom:1px solid #444;
+}
+
+.capture{
+display:flex;
+justify-content:space-between;
+padding:10px;
+border-bottom:1px solid #444;
+}
+
+.big{
+font-size:28px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>🎣 Panel Director - {{ contest.name }}</h1>
+
+<div class="grid">
+
+<div class="card">
+
+<h2>🏆 Pieza mayor</h2>
+
+{% if biggest %}
+
+<div class="big">
+
+{{ biggest.fisher.full_name }}
+
+{{ biggest.length_cm }} cm
+
+</div>
+
+{% else %}
+
+Sin capturas
+
+{% endif %}
+
+<h2>📏 Total centímetros</h2>
+
+<div class="big">
+
+{{ total_cm }}
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>🔥 Últimas capturas</h2>
+
+{% for c in last_captures %}
+
+<div class="capture">
+
+<span>{{ c.fisher.full_name }}</span>
+
+<span>{{ c.length_cm }} cm</span>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+</div>
+
+<br>
+
+<div class="card">
+
+<h2>📊 Ranking</h2>
+
+<table>
+
+<tr>
+<th>#</th>
+<th>Pescador</th>
+<th>Puntos</th>
+</tr>
+
+{% for f in ranking %}
+
+<tr>
+
+<td>{{ forloop.counter }}</td>
+
+<td>{{ f.full_name }}</td>
+
+<td>{{ f.total_points }}</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+</div>
+
+<script>
+
+setTimeout(function(){
+
+location.reload();
+
+},5000)
+
+</script>
+
+</body>
+</html>
