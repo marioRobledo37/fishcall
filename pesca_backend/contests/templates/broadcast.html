@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta charset="utf-8">
+
+<title>{{ contest.name }}</title>
+
+<style>
+
+body{
+    margin:0;
+    background:#0b132b;
+    color:white;
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+.header{
+    background:#1c2541;
+    padding:20px;
+    text-align:center;
+    font-size:40px;
+    font-weight:bold;
+}
+
+.container{
+    display:flex;
+    padding:20px;
+}
+
+.ranking{
+    width:40%;
+    padding:20px;
+}
+
+.captures{
+    width:60%;
+    padding:20px;
+}
+
+.title{
+    font-size:28px;
+    margin-bottom:20px;
+    border-bottom:2px solid #3a506b;
+    padding-bottom:10px;
+}
+
+.rank-item{
+    background:#1c2541;
+    margin-bottom:10px;
+    padding:12px;
+    font-size:22px;
+    border-radius:6px;
+}
+
+.capture{
+    background:#1c2541;
+    margin-bottom:10px;
+    padding:14px;
+    font-size:24px;
+    border-radius:6px;
+}
+
+.capture.new{
+    animation:highlight 2s ease;
+}
+
+@keyframes highlight{
+
+    0%{
+        transform:scale(1.3);
+        background:#ffcc00;
+        color:black;
+    }
+
+    100%{
+        transform:scale(1);
+    }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="header">
+🎣 {{ contest.name }}
+</div>
+
+<div class="container">
+
+<div class="ranking">
+
+<div class="title">🏆 Ranking</div>
+
+{% for fisher in ranking|slice:":5" %}
+
+<div class="rank-item">
+
+{{ forloop.counter }} — {{ fisher.full_name }}  
+<strong>{{ fisher.total_points }} cm</strong>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+
+<div class="captures">
+
+<div class="title">🐟 Últimas capturas</div>
+
+<div id="captures">
+
+{% for capture in captures %}
+
+<div class="capture">
+
+<strong>{{ capture.fisher.full_name }}</strong> — 
+{{ capture.species }} — 
+{{ capture.length_cm }} cm
+
+</div>
+
+{% endfor %}
+
+</div>
+
+</div>
+
+</div>
+
+<audio id="sound" src="/static/sounds/fish.mp3"></audio>
+
+
+<script>
+
+let lastId = null;
+
+async function loadCaptures(){
+
+    const res = await fetch("/contest/{{ contest.id }}/captures-json/");
+    const data = await res.json();
+
+    const container = document.getElementById("captures");
+
+    data.forEach(capture => {
+
+        if(lastId && capture.id <= lastId) return;
+
+        const div = document.createElement("div");
+
+        div.className = "capture new";
+
+        div.innerHTML =
+            "<strong>" + capture.fisher + "</strong> — "
+            + capture.species + " — "
+            + capture.length + " cm";
+
+        container.prepend(div);
+
+        const sound = document.getElementById("sound");
+
+        if(sound){
+            sound.play().catch(()=>{});
+        }
+
+        setTimeout(() => div.classList.remove("new"),2000);
+
+        lastId = capture.id;
+
+    });
+
+}
+
+setInterval(loadCaptures,3000);
+
+loadCaptures();
+
+</script>
+
+</body>
+
+</html>

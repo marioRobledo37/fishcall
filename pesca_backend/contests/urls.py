@@ -11,6 +11,12 @@ urlpatterns = [
         views.live_board,
         name="live_board"
     ),
+    
+    path(
+        "contest/<int:contest_id>/broadcast/",
+        views.broadcast_view,
+        name="broadcast_view"
+    ),
 
     path(
         "contest/<int:contest_id>/director/",
@@ -28,6 +34,12 @@ urlpatterns = [
         "save_subscription/",
         views.save_subscription,
         name="save_subscription"
+    ),
+    
+    path(
+        "contest/<int:contest_id>/captures-json/",
+        views.live_captures_json,
+        name="live_captures_json"
     ),
 
 ]
