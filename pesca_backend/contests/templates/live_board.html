@@ -46,6 +46,16 @@ h1{ font-size:42px; }
     object-fit:cover;
 }
 
+/* FOTO DEL PEZ */
+
+.fish{
+    width:90px;
+    height:70px;
+    border-radius:8px;
+    object-fit:cover;
+    margin-right:15px;
+}
+
 .name{
     font-size:26px;
     font-weight:bold;
@@ -83,9 +93,9 @@ h1{ font-size:42px; }
 }
 
 .banner-photo{
-    width:180px;
-    height:180px;
-    border-radius:50%;
+    width:280px;
+    height:200px;
+    border-radius:15px;
     object-fit:cover;
     margin-bottom:20px;
 }
@@ -136,10 +146,10 @@ h1{ font-size:42px; }
 🔥 NUEVA CAPTURA
 </div>
 
-<!-- FOTO PESCADOR -->
+<!-- FOTO DEL PEZ -->
 
-{% if captures.0.fisher.photo %}
-<img class="banner-photo" src="{{ captures.0.fisher.photo.url }}">
+{% if captures.0.photo %}
+<img class="banner-photo" src="{{ captures.0.photo.url }}">
 {% else %}
 <div class="banner-photo" style="background:#5bc0be;"></div>
 {% endif %}
@@ -189,6 +199,16 @@ h1{ font-size:42px; }
 
 <div class="left">
 
+<!-- FOTO DEL PEZ -->
+
+{% if c.photo %}
+<img class="fish" src="{{ c.photo.url }}">
+{% else %}
+<div class="fish" style="background:#5bc0be;"></div>
+{% endif %}
+
+<!-- FOTO DEL PESCADOR -->
+
 {% if c.fisher.photo %}
 <img class="photo" src="{{ c.fisher.photo.url }}">
 {% else %}
@@ -225,7 +245,7 @@ h1{ font-size:42px; }
 
 <script>
 
-/* ocultar banner después de 3 segundos */
+/* ocultar banner después de 5 segundos */
 
 setTimeout(function(){
 
