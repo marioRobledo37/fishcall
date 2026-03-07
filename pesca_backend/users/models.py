@@ -41,9 +41,17 @@ class Fisher(models.Model):
         blank=True
     )
 
+    
+    CATEGORY_CHOICES = [
+        ("MEN","Hombres"),
+        ("WOMEN","Mujeres"),
+        ("CADET","Cadetes"),
+        ("SENIOR","Señor"),
+        ("CHILDREN","Niños"),
+    ]
+
     category = models.CharField(
-        "Categoría",
-        max_length=20,
+        max_length=10,
         choices=CATEGORY_CHOICES
     )
 

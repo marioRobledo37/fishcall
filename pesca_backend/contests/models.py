@@ -107,7 +107,27 @@ class Contest(models.Model):
             .order_by("-total_points")
     )
         
-    
+    def ranking_by_category(self, category):
+
+        from users.models import Fisher
+
+        return (
+            Fisher.objects
+            .filter(
+                category=category,
+                registrations__contest=self
+            )
+            .annotate(
+                total_points=Sum(
+                    "capture__length_cm",
+                    filter=Q(
+                        capture__contest=self,
+                        capture__approved=True
+                    )
+                )
+            )
+            .order_by("-total_points")
+        )
         
     def is_ranking_public(self):
         if self.status != "CLOSED":

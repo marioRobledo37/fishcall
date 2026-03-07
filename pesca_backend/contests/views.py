@@ -193,6 +193,7 @@ from django.shortcuts import get_object_or_404
 from .models import Contest
 
 def live_captures_json(request, contest_id):
+
     contest = get_object_or_404(Contest, id=contest_id)
 
     captures = (
@@ -203,13 +204,16 @@ def live_captures_json(request, contest_id):
     )
 
     data = []
+
     for c in captures:
+
         data.append({
             "id": c.id,
             "fisher": c.fisher.full_name,
             "species": c.species,
             "length": c.length_cm,
-            "time": c.created_at.strftime("%H:%M")
+            "time": c.created_at.strftime("%H:%M"),
+            "photo": c.photo.url if c.photo else None
         })
 
     return JsonResponse(data, safe=False)
