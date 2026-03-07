@@ -1,21 +1,24 @@
 from django.urls import path
 from . import views
-from .views import capture_sync
 
 urlpatterns = [
-    
-    path("api/capture/", capture_sync),
 
     path(
         "contest/<int:contest_id>/live/",
         views.live_board,
         name="live_board"
     ),
-    
+
     path(
         "contest/<int:contest_id>/broadcast/",
         views.broadcast_view,
-        name="broadcast_view"
+        name="broadcast"
+    ),
+
+    path(
+        "contest/<int:contest_id>/captures-json/",
+        views.captures_json,
+        name="captures_json"
     ),
 
     path(
@@ -31,15 +34,13 @@ urlpatterns = [
     ),
 
     path(
-        "save_subscription/",
-        views.save_subscription,
-        name="save_subscription"
+        "api/capture/",
+        views.capture_sync
     ),
-    
+
     path(
-        "contest/<int:contest_id>/captures-json/",
-        views.live_captures_json,
-        name="live_captures_json"
+        "save_subscription/",
+        views.save_subscription
     ),
 
 ]
