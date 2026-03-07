@@ -9,3 +9,4 @@ pycodestyle==2.12.1
 pylint==3.3.1
 setuptools==75.3.0
 tomlkit==0.13.2
+gunicorn
