@@ -70,30 +70,29 @@ class Contest(models.Model):
         )
 
     def ranking(self):
-        from users.models import Fisher
 
         return (
             Fisher.objects
             .filter(registrations__contest=self)
             .annotate(
                 total_points=Sum(
-                    "captures__length_cm",
+                    "capture__length_cm",
                     filter=Q(
-                        captures__contest=self,
-                        captures__approved=True
+                        capture__contest=self,
+                        capture__approved=True
                     )
                 ),
                 total_captures=Count(
-                    "captures",
+                    "capture",
                     filter=Q(
-                        captures__contest=self,
-                        captures__approved=True
+                        capture__contest=self,
+                        capture__approved=True
                     )
                 )
             )
             .filter(total_points__isnull=False)
             .order_by("-total_points")
-        )
+    )
 
     def ranking_by_organization(self):
         from django.db.models import Sum
