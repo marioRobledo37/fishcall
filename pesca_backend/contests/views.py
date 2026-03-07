@@ -74,6 +74,31 @@ def live_board(request, contest_id):
 
 
 # ============================
+# BROADCAST VIEW (pantalla ESPN)
+# ============================
+
+def broadcast_view(request, contest_id):
+
+    contest = get_object_or_404(Contest, id=contest_id)
+
+    captures = (
+        Capture.objects
+        .filter(contest=contest, approved=True)
+        .select_related("fisher", "fisher__organization")
+        .order_by("-id")[:20]
+    )
+
+    return render(
+        request,
+        "broadcast.html",
+        {
+            "contest": contest,
+            "captures": captures
+        }
+    )
+
+
+# ============================
 # JSON PARA BROADCAST
 # ============================
 
@@ -93,7 +118,7 @@ def captures_json(request, contest_id):
 
         data.append({
             "id": c.id,
-            "fisher": c.fisher.full_name,
+            "fisher": c.fisher.full_name if hasattr(c.fisher, "full_name") else str(c.fisher),
             "species": c.species,
             "length": c.length_cm,
             "time": c.created_at.strftime("%H:%M"),
@@ -191,7 +216,7 @@ def fisher_lookup(request, contest_id):
         fisher = reg.fisher
 
         data = {
-            "name": fisher.get_full_name(),
+            "name": fisher.get_full_name() if hasattr(fisher, "get_full_name") else str(fisher),
             "club": fisher.organization.name if fisher.organization else "",
             "photo": fisher.photo.url if fisher.photo else "",
             "number": reg.competitor_number
