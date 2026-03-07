@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 import dj_database_url
 import os
+from google.oauth2 import service_account
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -39,6 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    "storages",
     
     'clubs',
     'users',
@@ -131,4 +134,18 @@ MEDIA_ROOT = BASE_DIR / "media"
 VAPID_PUBLIC_KEY = "BKKhCCYEJzpW2s1_qcMN4cLwwXdQsxwKh4XrILvH-ad5Rt4i8_rIZY-yl3LrbjR4C33wyywGBH9b9pH_yIzB54c="
 VAPID_PRIVATE_KEY = "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgM06Jw2_D_9__BL5Tgwu3wxX1xIqWW4V5hmFdjz8T3a2hRANCAASioQgmBCc6VtrNf6nDDeHC8MF3ULMcCoeF6yC7x_mneUbeIvP6yGWPspdy6240eAt98MssBgR_W_aR_8iMweeH"
 VAPID_ADMIN_EMAIL = "admin@fishcall.com"
+
+# ===============================
+# GOOGLE CLOUD STORAGE
+# ===============================
+
+DEFAULT_FILE_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"
+
+GS_BUCKET_NAME = "fishcall-media"
+
+GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
+    os.path.join(BASE_DIR, "credentials/service_account.json")
+)
+
+MEDIA_URL = f"https://storage.googleapis.com/{GS_BUCKET_NAME}/"
 
