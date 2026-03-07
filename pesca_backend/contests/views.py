@@ -1,16 +1,18 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
 from .models import Capture, Contest, PushSubscription, Registration
 from .forms import CaptureForm
-from django.shortcuts import redirect, render, get_object_or_404
-from django.http import JsonResponse
-from .models import Registration, Contest, Capture
-from django.views.decorators.csrf import csrf_exempt
+
 import json
 
 
+# ============================
+# API CAPTURA (APP / CELULAR)
+# ============================
+
 @csrf_exempt
-
-
 def capture_sync(request):
 
     if request.method == "POST":
@@ -30,17 +32,80 @@ def capture_sync(request):
                 fisher=reg.fisher,
                 contest=reg.contest,
                 species=species,
-                length_cm=int(length)
+                length_cm=int(length),
+                approved=True
             )
 
             return JsonResponse({"status": "ok"})
 
         except Registration.DoesNotExist:
 
-            return JsonResponse({"error": "competitor not found"}, status=404)
+            return JsonResponse(
+                {"error": "competitor not found"},
+                status=404
+            )
 
     return JsonResponse({"error": "invalid method"}, status=400)
 
+
+# ============================
+# LIVE BOARD (pantalla pública)
+# ============================
+
+def live_board(request, contest_id):
+
+    contest = get_object_or_404(Contest, id=contest_id)
+
+    captures = (
+        Capture.objects
+        .filter(contest=contest, approved=True)
+        .select_related("fisher", "fisher__organization")
+        .order_by("-id")[:30]
+    )
+
+    return render(
+        request,
+        "live_board.html",
+        {
+            "contest": contest,
+            "captures": captures
+        }
+    )
+
+
+# ============================
+# JSON PARA BROADCAST
+# ============================
+
+def captures_json(request, contest_id):
+
+    contest = get_object_or_404(Contest, id=contest_id)
+
+    captures = contest.captures.filter(
+        approved=True
+    ).select_related(
+        "fisher"
+    ).order_by("-id")[:20]
+
+    data = []
+
+    for c in captures:
+
+        data.append({
+            "id": c.id,
+            "fisher": c.fisher.full_name,
+            "species": c.species,
+            "length": c.length_cm,
+            "time": c.created_at.strftime("%H:%M"),
+            "photo": c.photo.url if c.photo else None
+        })
+
+    return JsonResponse(data, safe=False)
+
+
+# ============================
+# PANEL DIRECTOR
+# ============================
 
 def director_panel(request, contest_id):
 
@@ -55,7 +120,7 @@ def director_panel(request, contest_id):
     last_captures = Capture.objects.filter(
         contest=contest,
         approved=True
-    ).order_by("-created_at")[:10]
+    ).order_by("-id")[:10]
 
     context = {
         "contest": contest,
@@ -72,28 +137,11 @@ def director_panel(request, contest_id):
     )
 
 
+# ============================
+# CARGA FISCAL
+# ============================
 
-def live_board(request, contest_id):
-
-    contest = get_object_or_404(Contest, id=contest_id)
-
-    captures = contest.captures.filter(
-        approved=True
-    ).select_related("fisher").order_by("-created_at")[:20]
-
-    return render(
-        request,
-        "live_board.html",
-        {
-            "contest": contest,
-            "captures": captures
-        }
-    )
-    
-
-def fiscal_capture(request, contest_id):
-
-    contest = Contest.objects.get(id=contest_id)
+def fiscal_capture(request):
 
     if request.method == "POST":
 
@@ -103,7 +151,6 @@ def fiscal_capture(request, contest_id):
 
             capture = form.save(commit=False)
 
-            capture.contest = contest
             capture.approved = True
 
             capture.save()
@@ -118,13 +165,14 @@ def fiscal_capture(request, contest_id):
         request,
         "fiscal_capture.html",
         {
-            "form": form,
-            "contest": contest
+            "form": form
         }
     )
-    
 
 
+# ============================
+# BUSCAR PESCADOR POR NÚMERO
+# ============================
 
 def fisher_lookup(request, contest_id):
 
@@ -154,8 +202,11 @@ def fisher_lookup(request, contest_id):
     except Registration.DoesNotExist:
 
         return JsonResponse({"error": "not_found"})
-    
 
+
+# ============================
+# PUSH NOTIFICATIONS
+# ============================
 
 def save_subscription(request):
 
@@ -165,55 +216,4 @@ def save_subscription(request):
         subscription=data
     )
 
-    return JsonResponse({"status":"ok"})
-    
-    
-def broadcast_view(request, contest_id):
-
-    contest = get_object_or_404(Contest, id=contest_id)
-
-    captures = contest.captures.filter(
-        approved=True
-    ).select_related("fisher").order_by("-created_at")[:20]
-
-    ranking = contest.ranking()
-
-    return render(
-        request,
-        "broadcast.html",
-        {
-            "contest": contest,
-            "captures": captures,
-            "ranking": ranking
-        }
-    )
-    
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
-from .models import Contest
-
-def live_captures_json(request, contest_id):
-
-    contest = get_object_or_404(Contest, id=contest_id)
-
-    captures = (
-        contest.captures
-        .filter(approved=True)
-        .select_related("fisher")
-        .order_by("-created_at")[:20]
-    )
-
-    data = []
-
-    for c in captures:
-
-        data.append({
-            "id": c.id,
-            "fisher": c.fisher.full_name,
-            "species": c.species,
-            "length": c.length_cm,
-            "time": c.created_at.strftime("%H:%M"),
-            "photo": c.photo.url if c.photo else None
-        })
-
-    return JsonResponse(data, safe=False)
+    return JsonResponse({"status": "ok"})
