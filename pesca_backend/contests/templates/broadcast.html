@@ -10,73 +10,176 @@
 <style>
 
 body{
-    margin:0;
-    background:#0b132b;
-    color:white;
-    font-family:Arial, Helvetica, sans-serif;
+margin:0;
+background:#0b132b;
+color:white;
+font-family:Arial, Helvetica, sans-serif;
+overflow:hidden;
 }
 
 .header{
-    background:#1c2541;
-    padding:20px;
-    text-align:center;
-    font-size:40px;
-    font-weight:bold;
+background:#1c2541;
+padding:20px;
+text-align:center;
+font-size:40px;
+font-weight:bold;
 }
 
 .container{
-    display:flex;
-    padding:20px;
+display:flex;
+padding:20px;
+height:calc(100vh - 80px);
 }
 
 .ranking{
-    width:40%;
-    padding:20px;
+width:40%;
+padding:20px;
 }
 
 .captures{
-    width:60%;
-    padding:20px;
+width:60%;
+padding:20px;
+overflow:hidden;
 }
 
 .title{
-    font-size:28px;
-    margin-bottom:20px;
-    border-bottom:2px solid #3a506b;
-    padding-bottom:10px;
+font-size:28px;
+margin-bottom:20px;
+border-bottom:2px solid #3a506b;
+padding-bottom:10px;
 }
 
 .rank-item{
-    background:#1c2541;
-    margin-bottom:10px;
-    padding:12px;
-    font-size:22px;
-    border-radius:6px;
+background:#1c2541;
+margin-bottom:10px;
+padding:12px;
+font-size:22px;
+border-radius:6px;
 }
 
 .capture{
-    background:#1c2541;
-    margin-bottom:10px;
-    padding:14px;
-    font-size:24px;
-    border-radius:6px;
+background:#1c2541;
+margin-bottom:10px;
+padding:14px;
+font-size:24px;
+border-radius:6px;
+display:flex;
+align-items:center;
+gap:15px;
 }
 
-.capture.new{
-    animation:highlight 2s ease;
+.fish-photo{
+width:80px;
+height:80px;
+object-fit:cover;
+border-radius:8px;
 }
 
-@keyframes highlight{
+.length{
+font-size:26px;
+color:#4fd1c5;
+font-weight:bold;
+}
 
-    0%{
-        transform:scale(1.3);
-        background:#ffcc00;
-        color:black;
-    }
+/* ALERTA ESPN */
 
-    100%{
-        transform:scale(1);
-    }
+.alert-overlay{
+
+position:fixed;
+top:0;
+left:0;
+
+width:100%;
+height:100%;
+
+background:rgba(0,0,0,0.9);
+
+display:flex;
+justify-content:center;
+align-items:center;
+
+opacity:0;
+pointer-events:none;
+
+transition:opacity 0.5s;
+
+z-index:9999;
+
+}
+
+.alert-overlay.show{
+
+opacity:1;
+pointer-events:auto;
+
+}
+
+.alert-content{
+
+text-align:center;
+animation:zoomIn 0.6s;
+
+}
+
+.alert-title{
+
+font-size:60px;
+margin-bottom:30px;
+
+}
+
+.alert-photo{
+
+width:420px;
+height:320px;
+
+object-fit:cover;
+
+border-radius:20px;
+
+box-shadow:0 0 30px rgba(255,255,255,0.2);
+
+margin-bottom:30px;
+
+}
+
+.alert-fisher{
+
+font-size:50px;
+font-weight:bold;
+
+margin-bottom:10px;
+
+}
+
+.alert-species{
+
+font-size:40px;
+opacity:0.9;
+
+margin-bottom:10px;
+
+}
+
+.alert-length{
+
+font-size:80px;
+color:#4fd1c5;
+font-weight:bold;
+
+}
+
+@keyframes zoomIn{
+
+0%{
+transform:scale(0.6);
+opacity:0;
+}
+
+100%{
+transform:scale(1);
+opacity:1;
+}
 
 }
 
@@ -96,11 +199,11 @@ body{
 
 <div class="title">🏆 Ranking</div>
 
-{% for fisher in ranking|slice:":5" %}
+{% for fisher in ranking|slice:":10" %}
 
 <div class="rank-item">
 
-{{ forloop.counter }} — {{ fisher.full_name }}  
+{{ forloop.counter }} — {{ fisher.full_name }}
 <strong>{{ fisher.total_points }} cm</strong>
 
 </div>
@@ -120,9 +223,15 @@ body{
 
 <div class="capture">
 
-<strong>{{ capture.fisher.full_name }}</strong> — 
-{{ capture.species }} — 
-{{ capture.length_cm }} cm
+{% if capture.photo %}
+<img src="{{ capture.photo.url }}" class="fish-photo">
+{% endif %}
+
+<div>
+<strong>{{ capture.fisher.full_name }}</strong><br>
+{{ capture.species }}<br>
+<span class="length">{{ capture.length_cm }} cm</span>
+</div>
 
 </div>
 
@@ -134,7 +243,28 @@ body{
 
 </div>
 
-<audio id="sound" src="/static/sounds/fish.mp3"></audio>
+
+<!-- ALERTA CAPTURA -->
+
+<div id="capture-alert" class="alert-overlay">
+
+<div class="alert-content">
+
+<div class="alert-title">
+🔥 NUEVA CAPTURA
+</div>
+
+<img id="alert-photo" class="alert-photo">
+
+<div id="alert-fisher" class="alert-fisher"></div>
+
+<div id="alert-species" class="alert-species"></div>
+
+<div id="alert-length" class="alert-length"></div>
+
+</div>
+
+</div>
 
 
 <script>
@@ -143,37 +273,55 @@ let lastId = null;
 
 async function loadCaptures(){
 
-    const res = await fetch("/contest/{{ contest.id }}/captures-json/");
-    const data = await res.json();
+const res = await fetch("/contest/{{ contest.id }}/captures-json/");
+const data = await res.json();
 
-    const container = document.getElementById("captures");
+const container = document.getElementById("captures");
 
-    data.forEach(capture => {
+data.forEach(capture => {
 
-        if(lastId && capture.id <= lastId) return;
+if(lastId && capture.id <= lastId) return;
 
-        const div = document.createElement("div");
+const div = document.createElement("div");
 
-        div.className = "capture new";
+div.className = "capture";
 
-        div.innerHTML =
-            "<strong>" + capture.fisher + "</strong> — "
-            + capture.species + " — "
-            + capture.length + " cm";
+div.innerHTML =
 
-        container.prepend(div);
+(capture.photo ? "<img src='"+capture.photo+"' class='fish-photo'>" : "") +
 
-        const sound = document.getElementById("sound");
+"<div>" +
+"<strong>" + capture.fisher + "</strong><br>" +
+capture.species + "<br>" +
+"<span class='length'>" + capture.length + " cm</span>" +
+"</div>";
 
-        if(sound){
-            sound.play().catch(()=>{});
-        }
+container.prepend(div);
 
-        setTimeout(() => div.classList.remove("new"),2000);
+showCaptureAlert(capture);
 
-        lastId = capture.id;
+lastId = capture.id;
 
-    });
+});
+
+}
+
+function showCaptureAlert(capture){
+
+const overlay = document.getElementById("capture-alert");
+
+document.getElementById("alert-photo").src = capture.photo || "";
+document.getElementById("alert-fisher").innerText = capture.fisher;
+document.getElementById("alert-species").innerText = capture.species;
+document.getElementById("alert-length").innerText = capture.length + " cm";
+
+overlay.classList.add("show");
+
+setTimeout(() => {
+
+overlay.classList.remove("show");
+
+},5000);
 
 }
 
