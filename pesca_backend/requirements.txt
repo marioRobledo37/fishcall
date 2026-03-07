@@ -13,3 +13,4 @@ Django
 djangorestframework
 pillow
 gunicorn
+qrcode[pil]
