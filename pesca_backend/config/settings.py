@@ -151,9 +151,17 @@ STORAGES = {
 
 GS_BUCKET_NAME = "fishcall-media"
 
-GS_CREDENTIALS = service_account.Credentials.from_service_account_info(
-    json.loads(os.environ["SERVICE_ACCOUNT_JSON"])
-)
+if "SERVICE_ACCOUNT_JSON" in os.environ:
+
+    GS_CREDENTIALS = service_account.Credentials.from_service_account_info(
+        json.loads(os.environ["SERVICE_ACCOUNT_JSON"])
+    )
+
+else:
+
+    GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
+        os.path.join(BASE_DIR, "credentials/service_account.json")
+    )
 
 GS_PROJECT_ID = "grand-signifier-471712-m5"
 GS_DEFAULT_ACL = None
