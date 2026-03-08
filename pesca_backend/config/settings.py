@@ -85,7 +85,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
     "default": dj_database_url.config(
-        default=os.environ.get("DATABASE_URL"),
+        default="sqlite:///db.sqlite3",
         conn_max_age=600
     )
 }
@@ -129,8 +129,8 @@ STATIC_URL = 'static/'
 STATIC_ROOT = "staticfiles"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+# MEDIA_URL = "/media/"
+# MEDIA_ROOT = BASE_DIR / "media"
 VAPID_PUBLIC_KEY = "BKKhCCYEJzpW2s1_qcMN4cLwwXdQsxwKh4XrILvH-ad5Rt4i8_rIZY-yl3LrbjR4C33wyywGBH9b9pH_yIzB54c="
 VAPID_PRIVATE_KEY = "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgM06Jw2_D_9__BL5Tgwu3wxX1xIqWW4V5hmFdjz8T3a2hRANCAASioQgmBCc6VtrNf6nDDeHC8MF3ULMcCoeF6yC7x_mneUbeIvP6yGWPspdy6240eAt98MssBgR_W_aR_8iMweeH"
 VAPID_ADMIN_EMAIL = "admin@fishcall.com"
@@ -139,13 +139,24 @@ VAPID_ADMIN_EMAIL = "admin@fishcall.com"
 # GOOGLE CLOUD STORAGE
 # ===============================
 
-DEFAULT_FILE_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 GS_BUCKET_NAME = "fishcall-media"
 
 GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
     os.path.join(BASE_DIR, "credentials/service_account.json")
 )
+
+GS_PROJECT_ID = "grand-signifier-471712-m5"
+GS_DEFAULT_ACL = None
+GS_FILE_OVERWRITE = False
 
 MEDIA_URL = f"https://storage.googleapis.com/{GS_BUCKET_NAME}/"
 
