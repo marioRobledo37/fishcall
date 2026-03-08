@@ -14,6 +14,7 @@ from pathlib import Path
 import dj_database_url
 import os
 from google.oauth2 import service_account
+import json
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -150,8 +151,8 @@ STORAGES = {
 
 GS_BUCKET_NAME = "fishcall-media"
 
-GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
-    os.path.join(BASE_DIR, "credentials/service_account.json")
+GS_CREDENTIALS = service_account.Credentials.from_service_account_info(
+    json.loads(os.environ["SERVICE_ACCOUNT_JSON"])
 )
 
 GS_PROJECT_ID = "grand-signifier-471712-m5"
