@@ -100,6 +100,15 @@ h1{ font-size:42px; }
     margin-bottom:20px;
 }
 
+.banner-fisher{
+    width:140px;
+    height:140px;
+    border-radius:50%;
+    object-fit:cover;
+    margin-bottom:20px;
+    border:4px solid #5bc0be;
+}
+
 .banner-name{
     font-size:60px;
     font-weight:bold;
@@ -152,6 +161,11 @@ h1{ font-size:42px; }
 <img class="banner-photo" src="{{ captures.0.photo.url }}">
 {% else %}
 <div class="banner-photo" style="background:#5bc0be;"></div>
+{% endif %}
+
+
+{% if captures.0.fisher.photo %}
+<img class="banner-fisher" src="{{ captures.0.fisher.photo.url }}">
 {% endif %}
 
 <!-- NOMBRE -->
