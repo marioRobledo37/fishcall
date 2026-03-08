@@ -42,5 +42,11 @@ urlpatterns = [
         "save_subscription/",
         views.save_subscription
     ),
+    
+    path(
+        "contest/<int:contest_id>/ranking/",
+        views.ranking_board,
+        name="ranking_board"
+    )
 
 ]

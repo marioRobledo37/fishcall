@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>{{ contest.name }} – Premiación</title>
+
+<style>
+
+body{
+margin:0;
+background:#020617;
+color:white;
+font-family:Arial;
+text-align:center;
+overflow:hidden;
+}
+
+/* HEADER */
+
+.header{
+font-size:60px;
+margin-top:40px;
+font-weight:bold;
+}
+
+.subtitle{
+font-size:28px;
+color:#94a3b8;
+margin-bottom:60px;
+}
+
+/* REVEAL */
+
+#reveal{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:#000;
+display:none;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+animation:fade 0.5s;
+}
+
+.reveal-position{
+font-size:80px;
+margin-bottom:20px;
+}
+
+.reveal-name{
+font-size:100px;
+font-weight:bold;
+}
+
+.reveal-measure{
+font-size:120px;
+color:#22c55e;
+margin:20px 0;
+}
+
+.reveal-photo{
+width:420px;
+border-radius:20px;
+margin-top:30px;
+box-shadow:0px 0px 40px rgba(0,0,0,0.6);
+}
+
+.reveal-club{
+font-size:30px;
+margin-top:20px;
+color:#94a3b8;
+}
+
+@keyframes fade{
+from{opacity:0}
+to{opacity:1}
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+🏆 {{ contest.name }}
+</div>
+
+<div class="subtitle">
+Ceremonia de Premiación
+</div>
+
+<div id="reveal">
+
+<div id="pos" class="reveal-position"></div>
+
+<div id="name" class="reveal-name"></div>
+
+<img id="photo" class="reveal-photo">
+
+<div id="measure" class="reveal-measure"></div>
+
+<div id="club" class="reveal-club"></div>
+
+</div>
+
+<script>
+
+/* sonido */
+
+function playSound(){
+let audio = new Audio("https://actions.google.com/sounds/v1/crowds/large_crowd_applause.ogg");
+audio.play();
+}
+
+/* confetti simple */
+
+function confetti(){
+
+for(let i=0;i<120;i++){
+
+let c=document.createElement("div");
+
+c.style.position="fixed";
+c.style.width="6px";
+c.style.height="6px";
+c.style.background="white";
+c.style.top="-10px";
+c.style.left=Math.random()*100+"%";
+c.style.opacity=Math.random();
+
+document.body.appendChild(c);
+
+let speed=Math.random()*5+3;
+
+let pos=0;
+
+let drop=setInterval(function(){
+
+pos+=speed;
+
+c.style.top=pos+"px";
+
+if(pos>window.innerHeight){
+
+clearInterval(drop);
+c.remove();
+
+}
+
+},20);
+
+}
+
+}
+
+/* revelar ganador */
+
+function reveal(position,name,measure,photo,club){
+
+document.getElementById("pos").innerHTML=position;
+document.getElementById("name").innerHTML=name;
+document.getElementById("measure").innerHTML=measure+" cm";
+document.getElementById("photo").src=photo;
+document.getElementById("club").innerHTML=club;
+
+document.getElementById("reveal").style.display="flex";
+
+playSound();
+confetti();
+
+}
+
+/* ocultar */
+
+function hideReveal(){
+
+document.getElementById("reveal").style.display="none";
+
+}
+
+</script>
+
+</body>
+</html>

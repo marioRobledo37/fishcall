@@ -242,3 +242,18 @@ def save_subscription(request):
     )
 
     return JsonResponse({"status": "ok"})
+
+def ranking_board(request, contest_id):
+
+    contest = Contest.objects.get(id=contest_id)
+
+    captures = (
+        Capture.objects
+        .filter(contest=contest, approved=True)
+        .order_by("-length_cm")[:20]
+    )
+
+    return render(request, "ranking_board.html", {
+        "contest": contest,
+        "captures": captures
+    })
