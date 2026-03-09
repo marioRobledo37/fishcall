@@ -3,62 +3,20 @@ from . import views
 
 urlpatterns = [
 
-    path(
-        "contest/<int:contest_id>/live/",
-        views.live_board,
-        name="live_board"
-    ),
+path("contest/<int:contest_id>/live/",views.live_board),
 
-    path(
-        "contest/<int:contest_id>/broadcast/",
-        views.broadcast_view,
-        name="broadcast"
-    ),
+path("contest/<int:contest_id>/broadcast/",views.broadcast_view),
 
-    path(
-        "contest/<int:contest_id>/captures-json/",
-        views.captures_json,
-        name="captures_json"
-    ),
+path("contest/<int:contest_id>/captures-json/",views.captures_json),
 
-    path(
-        "contest/<int:contest_id>/director/",
-        views.director_panel,
-        name="director_panel"
-    ),
+path("contest/<int:contest_id>/ranking/",views.ranking_board),
 
-    path(
-        "fiscal/capture/",
-        views.fiscal_capture,
-        name="fiscal_capture"
-    ),
+path("director/<int:contest_id>/",views.director_panel),
 
-    path(
-        "api/capture/",
-        views.capture_sync
-    ),
+path("fiscal/",views.fiscal_capture),
 
-    path(
-        "save_subscription/",
-        views.save_subscription
-    ),
-    
-    path(
-        "contest/<int:contest_id>/ranking/",
-        views.ranking_board,
-        name="ranking_board"
-    ),
-    
-    path(
-        "contest/<int:contest_id>/captures-json/",
-        views.captures_json,
-        name="captures_json"
-    ),
-    
-    path(
-        "contest/<int:contest_id>/broadcast/",
-        views.broadcast_view,
-        name="broadcast"
-    )
+path("api/capture-sync/",views.capture_sync),
+
+path("api/save-subscription/",views.save_subscription),
 
 ]

@@ -1,8 +1,8 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+
 from .models import Capture, Contest, PushSubscription, Registration, Sponsor
-from .models import Capture, Contest, PushSubscription, Registration
 from .forms import CaptureForm
 
 import json
@@ -49,7 +49,7 @@ def capture_sync(request):
 
 
 # ============================
-# LIVE BOARD (pantalla pública)
+# LIVE BOARD
 # ============================
 
 def live_board(request, contest_id):
@@ -84,17 +84,17 @@ def live_board(request, contest_id):
 
 
 # ============================
-# BROADCAST VIEW (pantalla ESPN)
+# BROADCAST PRO
 # ============================
 
 def broadcast_view(request, contest_id):
 
     contest = get_object_or_404(Contest, id=contest_id)
 
-    last_capture = (
+    capture = (
         Capture.objects
         .filter(contest=contest, approved=True)
-        .select_related("fisher","fisher__organization")
+        .select_related("fisher")
         .order_by("-id")
         .first()
     )
@@ -112,7 +112,7 @@ def broadcast_view(request, contest_id):
         "broadcast_pro.html",
         {
             "contest": contest,
-            "capture": last_capture,
+            "capture": capture,
             "ranking": ranking,
             "sponsors": sponsors
         }
@@ -120,36 +120,34 @@ def broadcast_view(request, contest_id):
 
 
 # ============================
-# JSON PARA BROADCAST
+# API DETECTAR NUEVA CAPTURA
 # ============================
 
 def captures_json(request, contest_id):
 
     contest = get_object_or_404(Contest, id=contest_id)
 
-    last_capture = (
+    capture = (
         Capture.objects
         .filter(contest=contest, approved=True)
-        .select_related("fisher", "fisher__organization")
+        .select_related("fisher")
         .order_by("-id")
         .first()
     )
 
-    if not last_capture:
-        return JsonResponse({"capture": None})
+    if not capture:
+        return JsonResponse({"id": None})
 
-    data = {
-        "id": last_capture.id,
-        "fisher": last_capture.fisher.get_full_name(),
-        "species": last_capture.species,
-        "length": last_capture.length_cm,
-        "time": last_capture.created_at.strftime("%H:%M"),
-        "photo": last_capture.photo.url if last_capture.photo else None,
-        "club": last_capture.fisher.organization.name if last_capture.fisher.organization else "",
-        "fisher_photo": last_capture.fisher.photo.url if last_capture.fisher.photo else ""
-    }
+    return JsonResponse({
 
-    return JsonResponse(data)
+        "id": capture.id,
+        "fisher": capture.fisher.get_full_name(),
+        "species": capture.species,
+        "length": capture.length_cm,
+        "photo": capture.photo.url if capture.photo else None,
+        "time": capture.created_at.strftime("%H:%M")
+
+    })
 
 
 # ============================
@@ -217,40 +215,6 @@ def fiscal_capture(request):
             "form": form
         }
     )
-
-
-# ============================
-# BUSCAR PESCADOR POR NÚMERO
-# ============================
-
-def fisher_lookup(request, contest_id):
-
-    number = request.GET.get("number")
-
-    try:
-
-        reg = Registration.objects.select_related(
-            "fisher",
-            "fisher__organization"
-        ).get(
-            contest_id=contest_id,
-            competitor_number=number
-        )
-
-        fisher = reg.fisher
-
-        data = {
-            "name": fisher.get_full_name() if hasattr(fisher, "get_full_name") else str(fisher),
-            "club": fisher.organization.name if fisher.organization else "",
-            "photo": fisher.photo.url if fisher.photo else "",
-            "number": reg.competitor_number
-        }
-
-        return JsonResponse(data)
-
-    except Registration.DoesNotExist:
-
-        return JsonResponse({"error": "not_found"})
 
 
 # ============================
