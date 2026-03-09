@@ -91,19 +91,30 @@ def broadcast_view(request, contest_id):
 
     contest = get_object_or_404(Contest, id=contest_id)
 
-    captures = (
+    last_capture = (
         Capture.objects
         .filter(contest=contest, approved=True)
-        .select_related("fisher", "fisher__organization")
-        .order_by("-id")[:20]
+        .select_related("fisher","fisher__organization")
+        .order_by("-id")
+        .first()
+    )
+
+    ranking = contest.ranking()[:10]
+
+    sponsors = (
+        Sponsor.objects
+        .filter(contest=contest, active=True)
+        .order_by("order")
     )
 
     return render(
         request,
-        "broadcast.html",
+        "broadcast_pro.html",
         {
             "contest": contest,
-            "captures": captures
+            "capture": last_capture,
+            "ranking": ranking,
+            "sponsors": sponsors
         }
     )
 
