@@ -5,8 +5,12 @@ from datetime import timedelta
 import qrcode
 from io import BytesIO
 from django.core.files import File
-
 from users.models import Fisher
+from .fish_ai import detect_species
+from .fish_measure import measure_fish
+from .fish_overlay import draw_measurement
+from django.core.files.base import ContentFile
+import cv2
 
 
 # ===============================
@@ -54,10 +58,6 @@ class Contest(models.Model):
 
     created_at = models.DateTimeField("Creado", auto_now_add=True)
 
-    # ===============================
-    # MÉTRICAS DEL CONCURSO
-    # ===============================
-
     def total_centimeters(self):
         return (
             self.captures
@@ -98,55 +98,6 @@ class Contest(models.Model):
             .order_by("-total_points")
         )
 
-    def ranking_by_organization(self):
-
-        return (
-            self.captures
-            .filter(approved=True)
-            .values("fisher__organization__name")
-            .annotate(
-                total_points=Sum("length_cm")
-            )
-            .order_by("-total_points")
-        )
-
-    def ranking_by_category(self, category):
-
-        return (
-            Fisher.objects
-            .filter(
-                category=category,
-                registrations__contest=self
-            )
-            .annotate(
-                total_points=Sum(
-                    "capture__length_cm",
-                    filter=Q(
-                        capture__contest=self,
-                        capture__approved=True
-                    )
-                )
-            )
-            .order_by("-total_points")
-        )
-
-    def is_ranking_public(self):
-
-        if self.status != "CLOSED":
-            return False
-
-        return timezone.now() >= self.end_date + timedelta(hours=1)
-
-    def public_ranking(self, user=None):
-
-        if self.is_ranking_public():
-            return self.ranking()
-
-        if user and user.is_staff:
-            return self.ranking()
-
-        return None
-
     class Meta:
         verbose_name = "Concurso"
         verbose_name_plural = "Concursos"
@@ -157,7 +108,7 @@ class Contest(models.Model):
 
 
 # ===============================
-# SPONSORS DEL CONCURSO
+# SPONSORS
 # ===============================
 
 class Sponsor(models.Model):
@@ -271,6 +222,12 @@ class Registration(models.Model):
 class Capture(models.Model):
 
     fisher = models.ForeignKey(Fisher, on_delete=models.CASCADE)
+    
+    overlay = models.ImageField(
+        upload_to="measurements/",
+        null=True,
+        blank=True
+    )
 
     contest = models.ForeignKey(
         Contest,
@@ -278,9 +235,16 @@ class Capture(models.Model):
         related_name="captures"
     )
 
-    species = models.CharField(max_length=50)
+    species = models.CharField(
+        max_length=50,
+        blank=True
+    )
 
-    length_cm = models.IntegerField()
+    length_cm = models.FloatField(
+        "Longitud (cm)",
+        null=True,
+        blank=True
+    )
 
     photo = models.ImageField(
         upload_to="captures/",
@@ -309,6 +273,24 @@ class Capture(models.Model):
         verbose_name = "Captura"
         verbose_name_plural = "Capturas"
         ordering = ["-created_at"]
+
+    def save(self, *args, **kwargs):
+
+        super().save(*args, **kwargs)
+
+        if self.photo and self.length_cm and not self.overlay:
+
+            img = draw_measurement(self.photo.url, self.length_cm)
+
+            _, buffer = cv2.imencode(".jpg", img)
+
+            self.overlay.save(
+                f"measure_{self.id}.jpg",
+                ContentFile(buffer.tobytes()),
+                save=False
+            )
+
+            super().save(update_fields=["overlay"])
 
     def points(self):
 
