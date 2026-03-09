@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path, reverse
 from django.utils.html import format_html
 from django.shortcuts import render, get_object_or_404
-from .models import Contest, Registration, Capture
+from .models import Contest, Registration, Capture, Sponsor
 
 
 @admin.register(Contest)
@@ -152,3 +152,16 @@ class CaptureAdmin(admin.ModelAdmin):
     list_display = ("fisher", "contest", "length_cm", "approved", "created_at")
     list_filter = ("contest", "approved")
     search_fields = ("fisher__full_name",)
+    
+    
+# ==========================================
+# sponsors
+# ==========================================
+
+
+@admin.register(Sponsor)
+class SponsorAdmin(admin.ModelAdmin):
+
+    list_display = ("name","contest","is_main","active","order")
+    list_filter = ("contest","is_main","active")
+    ordering = ("order",)
