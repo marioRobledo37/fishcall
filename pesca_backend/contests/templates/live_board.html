@@ -75,6 +75,32 @@ h1{ font-size:42px; }
     font-size:18px;
 }
 
+/* PANTALLA SPONSOR */
+
+#sponsor-screen{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:black;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    z-index:1000;
+}
+
+.sponsor-logo{
+    width:420px;
+    margin-bottom:40px;
+}
+
+.sponsor-text{
+    font-size:48px;
+    font-weight:bold;
+}
+
 /* BANNER NUEVA CAPTURA */
 
 #banner{
@@ -89,7 +115,6 @@ h1{ font-size:42px; }
     justify-content:center;
     flex-direction:column;
     z-index:999;
-    animation:fadein 0.5s;
 }
 
 .banner-photo{
@@ -137,11 +162,6 @@ h1{ font-size:42px; }
     margin-top:10px;
 }
 
-@keyframes fadein{
-    from{opacity:0}
-    to{opacity:1}
-}
-
 </style>
 </head>
 
@@ -151,13 +171,26 @@ h1{ font-size:42px; }
 <h2>Capturas en vivo</h2>
 
 {% if captures %}
-<div id="banner">
+
+<!-- PANTALLA SPONSOR -->
+
+<div id="sponsor-screen">
+
+<img class="sponsor-logo" src="/static/img/puntodiesel.png">
+
+<div class="sponsor-text">
+PuntoDiesel te muestra la nueva captura
+</div>
+
+</div>
+
+<!-- BANNER CAPTURA -->
+
+<div id="banner" style="display:none;">
 
 <div style="font-size:40px;margin-bottom:20px;">
 🔥 NUEVA CAPTURA
 </div>
-
-<!-- FOTO DEL PEZ -->
 
 {% if captures.0.photo %}
 <img class="banner-photo" src="{{ captures.0.photo.url }}">
@@ -165,18 +198,13 @@ h1{ font-size:42px; }
 <div class="banner-photo" style="background:#5bc0be;"></div>
 {% endif %}
 
-
 {% if captures.0.fisher.photo %}
 <img class="banner-fisher" src="{{ captures.0.fisher.photo.url }}">
 {% endif %}
 
-<!-- NOMBRE -->
-
 <div class="banner-name">
 {{ captures.0.fisher.get_full_name }}
 </div>
-
-<!-- CLUB -->
 
 {% if captures.0.fisher.organization %}
 <div class="banner-club">
@@ -192,19 +220,16 @@ h1{ font-size:42px; }
 </div>
 {% endif %}
 
-<!-- ESPECIE -->
-
 <div class="banner-species">
 🐟 {{ captures.0.species|default:"Especie" }}
 </div>
-
-<!-- MEDIDA -->
 
 <div class="banner-measure">
 {{ captures.0.length_cm }} cm
 </div>
 
 </div>
+
 {% endif %}
 
 <div class="container">
@@ -215,15 +240,11 @@ h1{ font-size:42px; }
 
 <div class="left">
 
-<!-- FOTO DEL PEZ -->
-
 {% if c.photo %}
 <img class="fish" src="{{ c.photo.url }}">
 {% else %}
 <div class="fish" style="background:#5bc0be;"></div>
 {% endif %}
-
-<!-- FOTO DEL PESCADOR -->
 
 {% if c.fisher.photo %}
 <img class="photo" src="{{ c.fisher.photo.url }}">
@@ -261,20 +282,36 @@ h1{ font-size:42px; }
 
 <script>
 
-/* ocultar banner después de 5 segundos */
+let sponsor = document.getElementById("sponsor-screen");
+let banner = document.getElementById("banner");
+
+/* mostrar sponsor 3 segundos */
+
+if(sponsor){
 
 setTimeout(function(){
 
-let banner = document.getElementById("banner");
+sponsor.style.display="none";
 
 if(banner){
-    banner.style.display = "none";
+banner.style.display="flex";
 }
 
-},5000);
+},3000);
 
+}
 
-/* refrescar página */
+/* ocultar captura */
+
+setTimeout(function(){
+
+if(banner){
+banner.style.display="none";
+}
+
+},8000);
+
+/* refrescar */
 
 setTimeout(function(){
 location.reload();
