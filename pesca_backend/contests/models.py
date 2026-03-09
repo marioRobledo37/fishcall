@@ -8,17 +8,21 @@ from django.core.files import File
 
 from users.models import Fisher
 
-# ===============================
-# CONCURSO
-# ===============================
 
+# ===============================
+# PUSH NOTIFICATIONS
+# ===============================
 
 class PushSubscription(models.Model):
 
     subscription = models.JSONField()
 
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
+
+# ===============================
+# CONCURSO
+# ===============================
 
 class Contest(models.Model):
 
@@ -92,10 +96,9 @@ class Contest(models.Model):
             )
             .filter(total_points__isnull=False)
             .order_by("-total_points")
-    )
+        )
 
     def ranking_by_organization(self):
-        from django.db.models import Sum
 
         return (
             self.captures
@@ -105,11 +108,9 @@ class Contest(models.Model):
                 total_points=Sum("length_cm")
             )
             .order_by("-total_points")
-    )
-        
-    def ranking_by_category(self, category):
+        )
 
-        from users.models import Fisher
+    def ranking_by_category(self, category):
 
         return (
             Fisher.objects
@@ -128,18 +129,19 @@ class Contest(models.Model):
             )
             .order_by("-total_points")
         )
-        
+
     def is_ranking_public(self):
+
         if self.status != "CLOSED":
             return False
 
         return timezone.now() >= self.end_date + timedelta(hours=1)
-    
+
     def public_ranking(self, user=None):
+
         if self.is_ranking_public():
             return self.ranking()
 
-        # Si no es público, solo admin puede verlo
         if user and user.is_staff:
             return self.ranking()
 
@@ -155,11 +157,46 @@ class Contest(models.Model):
 
 
 # ===============================
-# INSCRIPCIÓN
+# SPONSORS DEL CONCURSO
 # ===============================
 
+class Sponsor(models.Model):
+
+    contest = models.ForeignKey(
+        Contest,
+        on_delete=models.CASCADE,
+        related_name="sponsors"
+    )
+
+    name = models.CharField(max_length=200)
+
+    logo = models.ImageField(upload_to="sponsors/")
+
+    is_main = models.BooleanField(
+        "Sponsor principal",
+        default=False
+    )
+
+    active = models.BooleanField(
+        "Activo",
+        default=True
+    )
+
+    order = models.IntegerField(
+        "Orden",
+        default=0
+    )
+
+    class Meta:
+        ordering = ["order"]
+
+    def __str__(self):
+        return f"{self.name} ({self.contest.name})"
 
 
+# ===============================
+# INSCRIPCIÓN
+# ===============================
 
 class Registration(models.Model):
 
@@ -176,7 +213,7 @@ class Registration(models.Model):
     )
 
     contest = models.ForeignKey(
-        "contests.Contest",
+        Contest,
         on_delete=models.CASCADE,
         related_name="registrations"
     )
@@ -207,7 +244,6 @@ class Registration(models.Model):
     def __str__(self):
         return f"{self.fisher} - {self.contest}"
 
-    # 👇 AQUÍ VA LA FUNCIÓN
     def save(self, *args, **kwargs):
 
         super().save(*args, **kwargs)
@@ -235,6 +271,7 @@ class Registration(models.Model):
 class Capture(models.Model):
 
     fisher = models.ForeignKey(Fisher, on_delete=models.CASCADE)
+
     contest = models.ForeignKey(
         Contest,
         on_delete=models.CASCADE,
@@ -242,14 +279,19 @@ class Capture(models.Model):
     )
 
     species = models.CharField(max_length=50)
+
     length_cm = models.IntegerField()
 
-    photo = models.ImageField(upload_to="captures/", null=True, blank=True)
+    photo = models.ImageField(
+        upload_to="captures/",
+        null=True,
+        blank=True
+    )
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    approved = models.BooleanField(default=False)
-
-    approved = models.BooleanField("Aprobada", default=False)
+    approved = models.BooleanField(
+        "Aprobada",
+        default=False
+    )
 
     approved_by = models.CharField(
         "Fiscal",
@@ -258,7 +300,10 @@ class Capture(models.Model):
         null=True
     )
 
-    created_at = models.DateTimeField("Fecha y hora", auto_now_add=True)
+    created_at = models.DateTimeField(
+        "Fecha y hora",
+        auto_now_add=True
+    )
 
     class Meta:
         verbose_name = "Captura"
@@ -266,12 +311,11 @@ class Capture(models.Model):
         ordering = ["-created_at"]
 
     def points(self):
+
         if self.approved:
             return self.length_cm
+
         return 0
 
     def __str__(self):
         return f"{self.fisher.full_name} - {self.length_cm} cm"
-    
-
-

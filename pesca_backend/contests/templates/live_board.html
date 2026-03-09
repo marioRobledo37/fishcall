@@ -1,168 +1,173 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
+
 <head>
+
 <meta charset="utf-8">
 <title>{{ contest.name }}</title>
 
 <style>
 
 body{
-    background:#0b132b;
-    color:white;
-    font-family:Arial;
-    text-align:center;
+background:#0b132b;
+color:white;
+font-family:Arial;
+text-align:center;
+margin:0;
 }
-
-h1{ font-size:42px; }
 
 .container{
-    width:90%;
-    margin:auto;
+width:90%;
+margin:auto;
+padding-bottom:120px;
 }
 
-/* TARJETAS */
-
 .card{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    background:#1c2541;
-    border-radius:12px;
-    padding:18px;
-    margin:12px 0;
-    box-shadow:0px 4px 20px rgba(0,0,0,0.4);
+display:flex;
+align-items:center;
+justify-content:space-between;
+background:#1c2541;
+border-radius:12px;
+padding:18px;
+margin:12px 0;
+box-shadow:0px 4px 20px rgba(0,0,0,0.4);
 }
 
 .left{
-    display:flex;
-    align-items:center;
+display:flex;
+align-items:center;
 }
 
 .photo{
-    width:70px;
-    height:70px;
-    border-radius:50%;
-    margin-right:15px;
-    object-fit:cover;
+width:70px;
+height:70px;
+border-radius:50%;
+margin-right:15px;
+object-fit:cover;
 }
 
-/* FOTO DEL PEZ */
-
 .fish{
-    width:90px;
-    height:70px;
-    border-radius:8px;
-    object-fit:cover;
-    margin-right:15px;
+width:90px;
+height:70px;
+border-radius:8px;
+object-fit:cover;
+margin-right:15px;
 }
 
 .name{
-    font-size:26px;
-    font-weight:bold;
+font-size:26px;
+font-weight:bold;
 }
 
 .species{
-    font-size:18px;
-    color:#a9bcd0;
+font-size:18px;
+color:#a9bcd0;
 }
 
 .measure{
-    font-size:34px;
-    font-weight:bold;
+font-size:34px;
+font-weight:bold;
 }
 
 .time{
-    font-size:18px;
+font-size:18px;
 }
 
 /* PANTALLA SPONSOR */
 
 #sponsor-screen{
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    background:black;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    z-index:1000;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:black;
+display:none;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+z-index:1000;
 }
 
 .sponsor-logo{
-    width:420px;
-    margin-bottom:40px;
+width:400px;
+margin-bottom:40px;
 }
 
 .sponsor-text{
-    font-size:48px;
-    font-weight:bold;
+font-size:48px;
+font-weight:bold;
 }
 
-/* BANNER NUEVA CAPTURA */
+/* BANNER CAPTURA */
 
 #banner{
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    background:rgba(0,0,0,0.92);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    flex-direction:column;
-    z-index:999;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.95);
+display:none;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+z-index:999;
 }
 
 .banner-photo{
-    width:80%;
-    max-width:1000px;
-    aspect-ratio:16/9;
-    border-radius:15px;
-    object-fit:contain;
-    margin-bottom:20px;
-    background:black;
-}
-
-.banner-fisher{
-    width:140px;
-    height:140px;
-    border-radius:50%;
-    object-fit:cover;
-    margin-bottom:20px;
-    border:4px solid #5bc0be;
+width:80%;
+max-width:1000px;
+aspect-ratio:16/9;
+border-radius:15px;
+object-fit:contain;
+margin-bottom:20px;
+background:black;
 }
 
 .banner-name{
-    font-size:60px;
-    font-weight:bold;
+font-size:60px;
+font-weight:bold;
 }
 
 .banner-measure{
-    font-size:90px;
-    color:#5bc0be;
-    margin-top:10px;
+font-size:90px;
+color:#5bc0be;
+margin-top:10px;
 }
 
-.banner-species{
-    font-size:34px;
-    margin-top:10px;
+/* SPONSOR BAR */
+
+.sponsor-bar{
+position:fixed;
+bottom:0;
+left:0;
+width:100%;
+height:90px;
+background:black;
+display:flex;
+align-items:center;
+overflow:hidden;
 }
 
-.banner-club{
-    margin-top:15px;
-    font-size:24px;
+.sponsor-track{
+display:flex;
+animation:scrollSponsors 40s linear infinite;
 }
 
-.club-logo{
-    height:60px;
-    margin-top:10px;
+.sponsor-item{
+height:70px;
+margin:0 40px;
+}
+
+@keyframes scrollSponsors{
+from{transform:translateX(0);}
+to{transform:translateX(-50%);}
 }
 
 </style>
+
 </head>
 
 <body>
@@ -170,70 +175,28 @@ h1{ font-size:42px; }
 <h1>🎣 {{ contest.name }}</h1>
 <h2>Capturas en vivo</h2>
 
-{% if captures %}
-
-<!-- PANTALLA SPONSOR -->
-
 <div id="sponsor-screen">
 
-<img class="sponsor-logo" src="/static/img/PuntoDiesel.png">
-
+{% if main_sponsor %}
+<img class="sponsor-logo" src="{{ main_sponsor.logo.url }}">
 <div class="sponsor-text">
-Punto Diesel Lider en afinacion de motores
-te muestra la nueva captura
-</div>
-
-</div>
-
-<!-- BANNER CAPTURA -->
-
-<div id="banner" style="display:none;">
-
-<div style="font-size:40px;margin-bottom:20px;">
-🔥 NUEVA CAPTURA
-</div>
-
-{% if captures.0.photo %}
-<img class="banner-photo" src="{{ captures.0.photo.url }}">
-{% else %}
-<div class="banner-photo" style="background:#5bc0be;"></div>
-{% endif %}
-
-{% if captures.0.fisher.photo %}
-<img class="banner-fisher" src="{{ captures.0.fisher.photo.url }}">
-{% endif %}
-
-<div class="banner-name">
-{{ captures.0.fisher.get_full_name }}
-</div>
-
-{% if captures.0.fisher.organization %}
-<div class="banner-club">
-
-{% if captures.0.fisher.organization.logo %}
-<img class="club-logo" src="{{ captures.0.fisher.organization.logo.url }}">
-{% endif %}
-
-<div>
-{{ captures.0.fisher.organization.name }}
-</div>
-
+{{ main_sponsor.name }} presenta la captura
 </div>
 {% endif %}
 
-<div class="banner-species">
-🐟 {{ captures.0.species|default:"Especie" }}
 </div>
 
-<div class="banner-measure">
-{{ captures.0.length_cm }} cm
-</div>
+<div id="banner">
+
+<img id="banner-photo" class="banner-photo">
+
+<div id="banner-name" class="banner-name"></div>
+
+<div id="banner-measure" class="banner-measure"></div>
 
 </div>
 
-{% endif %}
-
-<div class="container">
+<div class="container" id="captures-container">
 
 {% for c in captures %}
 
@@ -243,14 +206,10 @@ te muestra la nueva captura
 
 {% if c.photo %}
 <img class="fish" src="{{ c.photo.url }}">
-{% else %}
-<div class="fish" style="background:#5bc0be;"></div>
 {% endif %}
 
 {% if c.fisher.photo %}
 <img class="photo" src="{{ c.fisher.photo.url }}">
-{% else %}
-<div class="photo" style="background:#5bc0be;"></div>
 {% endif %}
 
 <div>
@@ -260,7 +219,7 @@ te muestra la nueva captura
 </div>
 
 <div class="species">
-🐟 {{ c.species|default:"Especie no especificada" }}
+🐟 {{ c.species }}
 </div>
 
 </div>
@@ -281,42 +240,85 @@ te muestra la nueva captura
 
 </div>
 
+<div class="sponsor-bar">
+
+<div class="sponsor-track">
+
+{% for s in sponsors %}
+{% if not s.is_main %}
+<img class="sponsor-item" src="{{ s.logo.url }}">
+{% endif %}
+{% endfor %}
+
+{% for s in sponsors %}
+{% if not s.is_main %}
+<img class="sponsor-item" src="{{ s.logo.url }}">
+{% endif %}
+{% endfor %}
+
+</div>
+
+</div>
+
 <script>
 
+let lastCaptureId = {{ captures.0.id|default:"0" }};
+
+function checkCaptures(){
+
+fetch("/contest/{{ contest.id }}/captures-json/")
+
+.then(r => r.json())
+
+.then(data => {
+
+if(!data.id) return;
+
+if(data.id > lastCaptureId){
+
+lastCaptureId = data.id;
+
+showCapture(data);
+
+}
+
+});
+
+}
+
+function showCapture(capture){
+
 let sponsor = document.getElementById("sponsor-screen");
+
 let banner = document.getElementById("banner");
 
-/* mostrar sponsor 3 segundos */
+document.getElementById("banner-photo").src = capture.photo;
 
-if(sponsor){
+document.getElementById("banner-name").innerText = capture.fisher;
 
-setTimeout(function(){
+document.getElementById("banner-measure").innerText = capture.length + " cm";
+
+sponsor.style.display="flex";
+
+setTimeout(()=>{
 
 sponsor.style.display="none";
 
-if(banner){
 banner.style.display="flex";
-}
 
 },3000);
 
-}
+setTimeout(()=>{
 
-/* ocultar captura */
-
-setTimeout(function(){
-
-if(banner){
 banner.style.display="none";
-}
+
+location.reload();
 
 },8000);
 
-/* refrescar */
+}
 
-setTimeout(function(){
-location.reload();
-},10000);
+setInterval(checkCaptures,3000);
 
 </script>
 

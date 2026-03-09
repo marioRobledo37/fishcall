@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-
+from .models import Capture, Contest, PushSubscription, Registration, Sponsor
 from .models import Capture, Contest, PushSubscription, Registration
 from .forms import CaptureForm
 
@@ -63,12 +63,22 @@ def live_board(request, contest_id):
         .order_by("-id")[:30]
     )
 
+    sponsors = (
+        Sponsor.objects
+        .filter(contest=contest, active=True)
+        .order_by("order")
+    )
+
+    main_sponsor = sponsors.filter(is_main=True).first()
+
     return render(
         request,
         "live_board.html",
         {
             "contest": contest,
-            "captures": captures
+            "captures": captures,
+            "sponsors": sponsors,
+            "main_sponsor": main_sponsor
         }
     )
 
@@ -106,26 +116,29 @@ def captures_json(request, contest_id):
 
     contest = get_object_or_404(Contest, id=contest_id)
 
-    captures = contest.captures.filter(
-        approved=True
-    ).select_related(
-        "fisher"
-    ).order_by("-id")[:20]
+    last_capture = (
+        Capture.objects
+        .filter(contest=contest, approved=True)
+        .select_related("fisher", "fisher__organization")
+        .order_by("-id")
+        .first()
+    )
 
-    data = []
+    if not last_capture:
+        return JsonResponse({"capture": None})
 
-    for c in captures:
+    data = {
+        "id": last_capture.id,
+        "fisher": last_capture.fisher.get_full_name(),
+        "species": last_capture.species,
+        "length": last_capture.length_cm,
+        "time": last_capture.created_at.strftime("%H:%M"),
+        "photo": last_capture.photo.url if last_capture.photo else None,
+        "club": last_capture.fisher.organization.name if last_capture.fisher.organization else "",
+        "fisher_photo": last_capture.fisher.photo.url if last_capture.fisher.photo else ""
+    }
 
-        data.append({
-            "id": c.id,
-            "fisher": c.fisher.full_name if hasattr(c.fisher, "full_name") else str(c.fisher),
-            "species": c.species,
-            "length": c.length_cm,
-            "time": c.created_at.strftime("%H:%M"),
-            "photo": c.photo.url if c.photo else None
-        })
-
-    return JsonResponse(data, safe=False)
+    return JsonResponse(data)
 
 
 # ============================
@@ -243,9 +256,14 @@ def save_subscription(request):
 
     return JsonResponse({"status": "ok"})
 
+
+# ============================
+# RANKING BOARD
+# ============================
+
 def ranking_board(request, contest_id):
 
-    contest = Contest.objects.get(id=contest_id)
+    contest = get_object_or_404(Contest, id=contest_id)
 
     captures = (
         Capture.objects

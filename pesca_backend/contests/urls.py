@@ -47,6 +47,12 @@ urlpatterns = [
         "contest/<int:contest_id>/ranking/",
         views.ranking_board,
         name="ranking_board"
+    ),
+    
+    path(
+        "contest/<int:contest_id>/captures-json/",
+        views.captures_json,
+        name="captures_json"
     )
 
 ]
