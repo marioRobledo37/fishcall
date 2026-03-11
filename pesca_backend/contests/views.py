@@ -41,6 +41,7 @@ def capture_sync(request):
         number = request.POST.get("number")
         species = request.POST.get("species")
         length = request.POST.get("length_cm")
+        photo = request.FILES.get("photo")   # ← FOTO
 
         try:
 
@@ -54,6 +55,7 @@ def capture_sync(request):
                 contest=reg.contest,
                 species=species,
                 length_cm=int(length),
+                photo=photo,                 # ← GUARDAR FOTO
                 approved=False
             )
 
@@ -67,7 +69,6 @@ def capture_sync(request):
             )
 
     return JsonResponse({"error": "invalid method"}, status=400)
-
 
 # ============================
 # LIVE BOARD
