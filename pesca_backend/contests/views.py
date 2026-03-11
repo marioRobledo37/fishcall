@@ -1,11 +1,31 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-
-from .models import Capture, Contest, PushSubscription, Registration, Sponsor
-from .forms import CaptureForm
+from django.contrib.admin.views.decorators import staff_member_required
 
 import json
+
+from users.models import Fisher
+from .models import Capture, Contest, PushSubscription, Registration, Sponsor
+from .forms import CaptureForm
+from .payments import create_payment_preference
+
+
+# ============================
+# LINK MAGICO DE INSCRIPCION
+# ============================
+
+def join_contest(request, code):
+
+    contest = get_object_or_404(Contest, join_code=code)
+
+    return render(
+        request,
+        "join_contest.html",
+        {
+            "contest": contest
+        }
+    )
 
 
 # ============================
@@ -17,6 +37,7 @@ def capture_sync(request):
 
     if request.method == "POST":
 
+        contest_id = request.POST.get("contest_id")
         number = request.POST.get("number")
         species = request.POST.get("species")
         length = request.POST.get("length_cm")
@@ -24,7 +45,7 @@ def capture_sync(request):
         try:
 
             reg = Registration.objects.get(
-                contest_id=1,
+                contest_id=contest_id,
                 competitor_number=number
             )
 
@@ -33,7 +54,7 @@ def capture_sync(request):
                 contest=reg.contest,
                 species=species,
                 length_cm=int(length),
-                approved=True
+                approved=False
             )
 
             return JsonResponse({"status": "ok"})
@@ -56,12 +77,10 @@ def live_board(request, contest_id):
 
     contest = get_object_or_404(Contest, id=contest_id)
 
-    captures = (
-        Capture.objects
-        .filter(contest=contest, approved=True)
-        .select_related("fisher", "fisher__organization")
-        .order_by("-id")[:30]
-    )
+    captures = Capture.objects.filter(
+    contest=contest,
+    status="approved"
+)
 
     sponsors = (
         Sponsor.objects
@@ -218,6 +237,60 @@ def fiscal_capture(request):
 
 
 # ============================
+# CAPTURAS PENDIENTES
+# ============================
+
+@staff_member_required
+def pending_captures(request, contest_id):
+
+    contest = get_object_or_404(Contest, id=contest_id)
+
+    captures = Capture.objects.filter(
+        contest=contest,
+        approved=False
+    ).order_by("-created_at")
+
+    return render(
+        request,
+        "pending_captures.html",
+        {
+            "contest": contest,
+            "captures": captures
+        }
+    )
+
+
+# ============================
+# APROBAR CAPTURA
+# ============================
+
+@staff_member_required
+def approve_capture(request, capture_id):
+
+    capture = get_object_or_404(Capture, id=capture_id)
+
+    capture.approved = True
+    capture.approved_by = request.user.username
+    capture.save()
+
+    return redirect(request.META.get("HTTP_REFERER"))
+
+
+# ============================
+# RECHAZAR CAPTURA
+# ============================
+
+@staff_member_required
+def reject_capture(request, capture_id):
+
+    capture = get_object_or_404(Capture, id=capture_id)
+
+    capture.delete()
+
+    return redirect(request.META.get("HTTP_REFERER"))
+
+
+# ============================
 # PUSH NOTIFICATIONS
 # ============================
 
@@ -246,7 +319,114 @@ def ranking_board(request, contest_id):
         .order_by("-length_cm")[:20]
     )
 
-    return render(request, "ranking_board.html", {
-        "contest": contest,
-        "captures": captures
-    })
+    return render(
+        request,
+        "ranking_board.html",
+        {
+            "contest": contest,
+            "captures": captures
+        }
+    )
+
+
+# ============================
+# PAGO DE INSCRIPCION
+# ============================
+
+def pay_registration(request, contest_id, fisher_id):
+
+    contest = get_object_or_404(Contest, id=contest_id)
+    fisher = get_object_or_404(Fisher, id=fisher_id)
+
+    payment_url = create_payment_preference(contest, fisher)
+
+    return redirect(payment_url)
+
+# ============================
+# sista de inscripcion
+# ============================
+
+def register_contest(request, code):
+
+    contest = get_object_or_404(Contest, join_code=code)
+
+    if request.method == "POST":
+
+        name = request.POST.get("name")
+        dni = request.POST.get("dni")
+        phone = request.POST.get("phone")
+
+        fisher, created = Fisher.objects.get_or_create(
+            dni=dni,
+            defaults={
+                "full_name": name,
+                "phone": phone
+            }
+        )
+
+        # crear inscripción
+        registration, created = Registration.objects.get_or_create(
+            fisher=fisher,
+            contest=contest
+        )
+
+        # asignar numero de pescador
+        if not registration.competitor_number:
+
+            last = (
+                Registration.objects
+                .filter(contest=contest)
+                .order_by("-competitor_number")
+                .first()
+            )
+
+            if last and last.competitor_number:
+                registration.competitor_number = last.competitor_number + 1
+            else:
+                registration.competitor_number = 1
+
+            registration.save()
+
+        # si el torneo tiene costo
+        if contest.entry_fee > 0 and contest.mode == "SELF":
+
+            return redirect(
+                f"/contest/{contest.id}/pay/{fisher.id}/"
+            )
+
+        return render(
+            request,
+            "registration_success.html",
+            {
+                "contest": contest,
+                "registration": registration
+            }
+        )
+
+    return render(
+        request,
+        "contest_register.html",
+        {
+            "contest": contest
+        }
+    )
+    
+def fisher_lookup_dni(request):
+    dni = request.GET.get("dni")
+
+    if not dni:
+        return JsonResponse({"error": "DNI requerido"}, status=400)
+
+    try:
+        fisher = Fisher.objects.get(dni=dni)
+
+        data = {
+            "id": fisher.id,
+            "name": fisher.name,
+            "dni": fisher.dni,
+        }
+
+        return JsonResponse(data)
+
+    except Fisher.DoesNotExist:
+        return JsonResponse({"found": False})

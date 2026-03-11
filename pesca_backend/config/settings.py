@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
 
     "storages",
+    "rest_framework",
 
     "clubs",
     "users",
@@ -180,3 +181,5 @@ VAPID_ADMIN_EMAIL = "admin@fishcall.com"
 # ===============================
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+MERCADOPAGO_ACCESS_TOKEN = "APP_USR-1697937262543059-031100-762e8c7705f7e1198ca2851901c42bc3-3258945590"

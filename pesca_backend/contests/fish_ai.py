@@ -1,25 +1,46 @@
-import requests
-from PIL import Image
-from io import BytesIO
+from google.cloud import vision
+from google.oauth2 import service_account
+import os
+
+# ruta a tu credencial
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+
+credentials = service_account.Credentials.from_service_account_file(
+    os.path.join(BASE_DIR, "credentials/service_account.json")
+)
+
+client = vision.ImageAnnotatorClient(credentials=credentials)
 
 
 def detect_species(image_url):
 
     try:
 
-        response = requests.get(image_url)
+        image = vision.Image()
+        image.source.image_uri = image_url
 
-        img = Image.open(BytesIO(response.content))
+        response = client.label_detection(image=image)
 
-        width, height = img.size
+        labels = [label.description.lower() for label in response.label_annotations]
 
-        # lógica simple temporal
-        # solo verificar que sea una imagen válida
+        print("LABELS DETECTADAS:", labels)
 
-        if width > 0 and height > 0:
+        if "catfish" in labels:
+            return "Bagre"
+
+        if "pike" in labels:
+            return "Tararira"
+
+        if "carp" in labels:
+            return "Boga"
+
+        if "fish" in labels:
             return "Pez"
 
-    except Exception:
-        pass
+        return "Desconocido"
 
-    return "Desconocido"
+    except Exception as e:
+
+        print("ERROR IA:", e)
+
+        return "Pez"

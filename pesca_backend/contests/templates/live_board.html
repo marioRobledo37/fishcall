@@ -7,6 +7,13 @@
 <meta charset="utf-8">
 <title>{{ contest.name }}</title>
 
+<link rel="manifest" href="{% static 'manifest.json' %}">
+<meta name="theme-color" content="#0b132b">
+
+<link rel="apple-touch-icon" href="{% static 'icons/icon-192.png' %}">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
 <style>
 
 body{
@@ -166,6 +173,21 @@ from{transform:translateX(0);}
 to{transform:translateX(-50%);}
 }
 
+/* BOTON APP */
+
+#installBtn{
+position:fixed;
+right:20px;
+bottom:110px;
+background:#5bc0be;
+border:none;
+padding:14px 18px;
+border-radius:8px;
+font-size:16px;
+cursor:pointer;
+display:none;
+}
+
 </style>
 
 </head>
@@ -175,16 +197,22 @@ to{transform:translateX(-50%);}
 <h1>🎣 {{ contest.name }}</h1>
 <h2>Capturas en vivo</h2>
 
+
+<!-- SPONSOR SCREEN -->
+
 <div id="sponsor-screen">
 
 {% if main_sponsor %}
 <img class="sponsor-logo" src="{{ main_sponsor.logo.url }}">
 <div class="sponsor-text">
-{{ main_sponsor.name }} , presenta la nueva captura!
+{{ main_sponsor.name }} presenta la nueva captura
 </div>
 {% endif %}
 
 </div>
+
+
+<!-- BANNER CAPTURA -->
 
 <div id="banner">
 
@@ -195,6 +223,9 @@ to{transform:translateX(-50%);}
 <div id="banner-measure" class="banner-measure"></div>
 
 </div>
+
+
+<!-- CAPTURAS -->
 
 <div class="container" id="captures-container">
 
@@ -240,6 +271,9 @@ to{transform:translateX(-50%);}
 
 </div>
 
+
+<!-- SPONSORS -->
+
 <div class="sponsor-bar">
 
 <div class="sponsor-track">
@@ -260,9 +294,15 @@ to{transform:translateX(-50%);}
 
 </div>
 
+
+<button id="installBtn">
+Instalar FishCall 📱
+</button>
+
+
 <script>
 
-let lastCaptureId = {{ captures.0.id|default:"0" }};
+let lastCaptureId = {% if captures %}{{ captures.0.id }}{% else %}0{% endif %};
 
 function checkCaptures(){
 
@@ -282,9 +322,12 @@ showCapture(data);
 
 }
 
-});
+})
+
+.catch(err => console.log("error:",err));
 
 }
+
 
 function showCapture(capture){
 
@@ -292,33 +335,68 @@ let sponsor = document.getElementById("sponsor-screen");
 
 let banner = document.getElementById("banner");
 
-document.getElementById("banner-photo").src = capture.photo;
+let photo = document.getElementById("banner-photo");
+
+if(capture.photo){
+photo.src = capture.photo;
+}else{
+photo.src = "";
+}
 
 document.getElementById("banner-name").innerText = capture.fisher;
 
 document.getElementById("banner-measure").innerText = capture.length + " cm";
 
+if(sponsor.innerHTML.trim() !== ""){
 sponsor.style.display="flex";
+}
 
 setTimeout(()=>{
 
 sponsor.style.display="none";
-
 banner.style.display="flex";
 
-},5000);
+},4000);
 
 setTimeout(()=>{
 
 banner.style.display="none";
-
 location.reload();
 
 },8000);
 
 }
 
+
 setInterval(checkCaptures,3000);
+
+
+/* PWA install */
+
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+
+e.preventDefault();
+
+deferredPrompt = e;
+
+document.getElementById("installBtn").style.display = "block";
+
+});
+
+
+document.getElementById("installBtn").addEventListener("click", async () => {
+
+if(!deferredPrompt) return;
+
+deferredPrompt.prompt();
+
+const { outcome } = await deferredPrompt.userChoice;
+
+deferredPrompt = null;
+
+});
 
 </script>
 

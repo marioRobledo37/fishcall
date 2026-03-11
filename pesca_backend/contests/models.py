@@ -1,3 +1,5 @@
+import uuid
+
 from django.db import models
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
@@ -5,12 +7,10 @@ from datetime import timedelta
 import qrcode
 from io import BytesIO
 from django.core.files import File
+
 from users.models import Fisher
 from .fish_ai import detect_species
 from .fish_measure import measure_fish
-from .fish_overlay import draw_measurement
-from django.core.files.base import ContentFile
-import cv2
 
 
 # ===============================
@@ -37,28 +37,68 @@ class Contest(models.Model):
         ("CLOSED", "Finalizado"),
     ]
 
-    name = models.CharField("Nombre del Concurso", max_length=150)
+    MODE_CHOICES = [
+        ("SELF", "Autogestionado"),
+        ("PRO", "Evento profesional"),
+    ]
+
+    name = models.CharField(max_length=150)
 
     organizer = models.ForeignKey(
         "clubs.Organization",
         on_delete=models.CASCADE,
-        related_name="organized_contests",
-        verbose_name="Organizador"
+        related_name="organized_contests"
     )
 
-    start_date = models.DateTimeField("Fecha inicio")
-    end_date = models.DateTimeField("Fecha fin")
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
 
     status = models.CharField(
-        "Estado",
         max_length=10,
         choices=STATUS_CHOICES,
         default="DRAFT"
     )
 
-    created_at = models.DateTimeField("Creado", auto_now_add=True)
+    # modo del torneo
+    mode = models.CharField(
+        max_length=10,
+        choices=MODE_CHOICES,
+        default="SELF"
+    )
+
+    # costo de inscripción
+    entry_fee = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
+
+    # link mágico
+    join_code = models.CharField(
+        max_length=10,
+        unique=True,
+        blank=True
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    # ===============================
+    # GENERAR CÓDIGO DE INVITACIÓN
+    # ===============================
+
+    def save(self, *args, **kwargs):
+
+        if not self.join_code:
+            self.join_code = uuid.uuid4().hex[:6].upper()
+
+        super().save(*args, **kwargs)
+
+    # ===============================
+    # MÉTRICAS DEL TORNEO
+    # ===============================
 
     def total_centimeters(self):
+
         return (
             self.captures
             .filter(approved=True)
@@ -66,6 +106,7 @@ class Contest(models.Model):
         )
 
     def biggest_capture(self):
+
         return (
             self.captures
             .filter(approved=True)
@@ -99,12 +140,10 @@ class Contest(models.Model):
         )
 
     class Meta:
-        verbose_name = "Concurso"
-        verbose_name_plural = "Concursos"
         ordering = ["-start_date"]
 
     def __str__(self):
-        return f"{self.name} ({self.start_date.date()})"
+        return self.name
 
 
 # ===============================
@@ -123,20 +162,11 @@ class Sponsor(models.Model):
 
     logo = models.ImageField(upload_to="sponsors/")
 
-    is_main = models.BooleanField(
-        "Sponsor principal",
-        default=False
-    )
+    is_main = models.BooleanField(default=False)
 
-    active = models.BooleanField(
-        "Activo",
-        default=True
-    )
+    active = models.BooleanField(default=True)
 
-    order = models.IntegerField(
-        "Orden",
-        default=0
-    )
+    order = models.IntegerField(default=0)
 
     class Meta:
         ordering = ["order"]
@@ -170,7 +200,6 @@ class Registration(models.Model):
     )
 
     competitor_number = models.IntegerField(
-        "Número de pescador",
         null=True,
         blank=True
     )
@@ -221,13 +250,13 @@ class Registration(models.Model):
 
 class Capture(models.Model):
 
+    STATUS_CHOICES = [
+        ("pending", "Pendiente"),
+        ("approved", "Aprobada"),
+        ("rejected", "Rechazada"),
+    ]
+
     fisher = models.ForeignKey(Fisher, on_delete=models.CASCADE)
-    
-    overlay = models.ImageField(
-        upload_to="measurements/",
-        null=True,
-        blank=True
-    )
 
     contest = models.ForeignKey(
         Contest,
@@ -240,8 +269,7 @@ class Capture(models.Model):
         blank=True
     )
 
-    length_cm = models.FloatField(
-        "Longitud (cm)",
+    length_cm = models.IntegerField(
         null=True,
         blank=True
     )
@@ -252,52 +280,55 @@ class Capture(models.Model):
         blank=True
     )
 
-    approved = models.BooleanField(
-        "Aprobada",
-        default=False
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default="pending"
     )
 
     approved_by = models.CharField(
-        "Fiscal",
         max_length=120,
         blank=True,
         null=True
     )
 
-    created_at = models.DateTimeField(
-        "Fecha y hora",
-        auto_now_add=True
-    )
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = "Captura"
-        verbose_name_plural = "Capturas"
         ordering = ["-created_at"]
 
     def save(self, *args, **kwargs):
 
         super().save(*args, **kwargs)
 
-        if self.photo and self.length_cm and not self.overlay:
+        if self.photo and not self.length_cm:
 
-            img = draw_measurement(self.photo.url, self.length_cm)
+            try:
 
-            _, buffer = cv2.imencode(".jpg", img)
+                measured = measure_fish(self.photo.url)
 
-            self.overlay.save(
-                f"measure_{self.id}.jpg",
-                ContentFile(buffer.tobytes()),
-                save=False
-            )
+                if measured:
+                    self.length_cm = measured
+                    super().save(update_fields=["length_cm"])
 
-            super().save(update_fields=["overlay"])
+            except Exception as e:
+                print("ERROR MEDICION:", e)
 
-    def points(self):
+        if self.photo and not self.species:
 
-        if self.approved:
-            return self.length_cm
+            try:
 
-        return 0
+                species_detected = detect_species(self.photo.url)
+
+                if species_detected != "Desconocido":
+
+                    self.species = species_detected
+                    super().save(update_fields=["species"])
+
+            except Exception as e:
+                print("ERROR ESPECIE:", e)
 
     def __str__(self):
         return f"{self.fisher.full_name} - {self.length_cm} cm"
+    
+    

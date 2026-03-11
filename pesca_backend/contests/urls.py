@@ -19,4 +19,43 @@ path("api/capture-sync/",views.capture_sync),
 
 path("api/save-subscription/",views.save_subscription),
 
+path(
+"contest/<int:contest_id>/pending/",
+views.pending_captures
+),
+
+path(
+"capture/<int:capture_id>/approve/",
+views.approve_capture
+),
+
+path(
+    "capture/<int:capture_id>/reject/",
+    views.reject_capture
+),
+
+path(
+    "contest/<int:contest_id>/pay/<int:fisher_id>/",
+    views.pay_registration,
+    name="pay_registration"
+),
+
+path(
+    "join/<str:code>/",
+    views.join_contest,
+    name="join_contest"
+),
+
+path(
+    "join/<str:code>/register/",
+    views.register_contest,
+    name="register_contest"
+),
+
+path(
+    "api/fisher-lookup/",
+    views.fisher_lookup_dni,
+    name="fisher_lookup_dni"
+)
+
 ]

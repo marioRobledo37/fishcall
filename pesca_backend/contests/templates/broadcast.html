@@ -81,7 +81,7 @@ color:#4fd1c5;
 font-weight:bold;
 }
 
-/* ALERTA ESPN */
+/* ALERTA ESTILO TORNEO */
 
 .alert-overlay{
 
@@ -230,7 +230,15 @@ opacity:1;
 <div>
 <strong>{{ capture.fisher.full_name }}</strong><br>
 {{ capture.species }}<br>
-<span class="length">{{ capture.length_cm }} cm</span>
+
+<span class="length">
+{% if capture.length_cm %}
+{{ capture.length_cm }} cm
+{% else %}
+--
+{% endif %}
+</span>
+
 </div>
 
 </div>
@@ -269,7 +277,7 @@ opacity:1;
 
 <script>
 
-let lastId = null;
+let lastId = 0;
 
 async function loadCaptures(){
 
@@ -280,7 +288,7 @@ const container = document.getElementById("captures");
 
 data.forEach(capture => {
 
-if(lastId && capture.id <= lastId) return;
+if(capture.id <= lastId) return;
 
 const div = document.createElement("div");
 
@@ -293,7 +301,7 @@ div.innerHTML =
 "<div>" +
 "<strong>" + capture.fisher + "</strong><br>" +
 capture.species + "<br>" +
-"<span class='length'>" + capture.length + " cm</span>" +
+"<span class='length'>" + (capture.length || "--") + " cm</span>" +
 "</div>";
 
 container.prepend(div);
@@ -310,10 +318,18 @@ function showCaptureAlert(capture){
 
 const overlay = document.getElementById("capture-alert");
 
-document.getElementById("alert-photo").src = capture.photo || "";
+const photo = document.getElementById("alert-photo");
+
+if(capture.photo){
+photo.src = capture.photo;
+photo.style.display = "block";
+}else{
+photo.style.display = "none";
+}
+
 document.getElementById("alert-fisher").innerText = capture.fisher;
 document.getElementById("alert-species").innerText = capture.species;
-document.getElementById("alert-length").innerText = capture.length + " cm";
+document.getElementById("alert-length").innerText = (capture.length || "--") + " cm";
 
 overlay.classList.add("show");
 

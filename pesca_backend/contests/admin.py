@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import path, reverse
 from django.utils.html import format_html
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import redirect, render, get_object_or_404
 from .models import Contest, Registration, Capture, Sponsor
 
 
@@ -31,10 +31,6 @@ class ContestAdmin(admin.ModelAdmin):
         biggest = contest.biggest_capture()
         total_cm = contest.total_centimeters()
 
-        # ==========================================
-        # RANKING POR CATEGORÍA
-        # ==========================================
-
         ranking_by_category = {}
 
         for fisher in ranking:
@@ -44,10 +40,6 @@ class ContestAdmin(admin.ModelAdmin):
                 ranking_by_category[category] = []
 
             ranking_by_category[category].append(fisher)
-
-        # ==========================================
-        # AGRUPAR POR ORGANIZACIÓN
-        # ==========================================
 
         ranking_by_org = {}
 
@@ -63,10 +55,6 @@ class ContestAdmin(admin.ModelAdmin):
                 ranking_by_org[org] = []
 
             ranking_by_org[org].append(fisher)
-
-        # ==========================================
-        # CALCULAR PUNTOS POR ORGANIZACIÓN
-        # ==========================================
 
         ranking_org = []
 
@@ -149,19 +137,97 @@ class RegistrationAdmin(admin.ModelAdmin):
 @admin.register(Capture)
 class CaptureAdmin(admin.ModelAdmin):
 
-    list_display = ("fisher", "contest", "length_cm", "approved", "created_at")
-    list_filter = ("contest", "approved")
-    search_fields = ("fisher__full_name",)
-    
-    
-# ==========================================
-# sponsors
-# ==========================================
+    list_display = (
+        "fisher",
+        "contest",
+        "species",
+        "length_cm",
+        "status",
+        "action_buttons",
+        "created_at"
+    )
 
+    list_filter = (
+        "contest",
+        "status",
+        "species"
+    )
+
+    search_fields = (
+        "fisher__full_name",
+        "species"
+    )
+
+    def get_urls(self):
+
+        urls = super().get_urls()
+
+        custom_urls = [
+            path(
+                "approve/<int:capture_id>/",
+                self.admin_site.admin_view(self.approve_capture),
+                name="approve-capture",
+            ),
+            path(
+                "reject/<int:capture_id>/",
+                self.admin_site.admin_view(self.reject_capture),
+                name="reject-capture",
+            ),
+        ]
+
+        return custom_urls + urls
+
+
+    def action_buttons(self, obj):
+
+        if obj.status == "pending":
+
+            approve_url = reverse("admin:approve-capture", args=[obj.id])
+            reject_url = reverse("admin:reject-capture", args=[obj.id])
+
+            return format_html(
+                '<a class="button" style="color:green;" href="{}">✔</a> '
+                '<a class="button" style="color:red;" href="{}">✖</a>',
+                approve_url,
+                reject_url
+            )
+
+        return "-"
+
+    action_buttons.short_description = "Acción"
+
+
+    def approve_capture(self, request, capture_id):
+
+        capture = Capture.objects.get(id=capture_id)
+
+        capture.status = "approved"
+        capture.approved_by = request.user.username
+        capture.save()
+
+        return redirect(request.META.get("HTTP_REFERER"))
+
+
+    def reject_capture(self, request, capture_id):
+
+        capture = Capture.objects.get(id=capture_id)
+
+        capture.status = "rejected"
+        capture.approved_by = request.user.username
+        capture.save()
+
+        return redirect(request.META.get("HTTP_REFERER"))
+
+
+# ==========================================
+# SPONSORS
+# ==========================================
 
 @admin.register(Sponsor)
 class SponsorAdmin(admin.ModelAdmin):
 
-    list_display = ("name","contest","is_main","active","order")
-    list_filter = ("contest","is_main","active")
+    list_display = ("name", "contest", "is_main", "active", "order")
+
+    list_filter = ("contest", "is_main", "active")
+
     ordering = ("order",)

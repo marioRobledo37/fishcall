@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>{{ contest.name }}</title>
+
+<style>
+
+body{
+background:#0b132b;
+color:white;
+font-family:Arial;
+text-align:center;
+}
+
+.box{
+width:400px;
+margin:auto;
+background:#1c2541;
+padding:30px;
+border-radius:10px;
+}
+
+input{
+width:100%;
+padding:10px;
+margin:10px 0;
+font-size:16px;
+}
+
+button{
+background:#5bc0be;
+border:none;
+padding:15px;
+width:100%;
+font-size:18px;
+cursor:pointer;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>{{ contest.name }}</h1>
+
+<div class="box">
+
+<form method="post">
+
+{% csrf_token %}
+
+<input id="dni" name="dni" placeholder="DNI" required>
+
+<input id="name" name="name" placeholder="Nombre completo" required>
+
+<input id="phone" name="phone" placeholder="Teléfono">
+
+<button type="submit">
+
+Inscribirme
+
+</button>
+
+</form>
+
+</div>
+
+
+<script>
+
+const dniInput = document.getElementById("dni")
+
+dniInput.addEventListener("blur", async function(){
+
+    const dni = dniInput.value
+
+    if(!dni) return
+
+    const response = await fetch(`/api/fisher-lookup/?dni=${dni}`)
+
+    const data = await response.json()
+
+    if(data.found){
+
+        document.getElementById("name").value = data.name
+        document.getElementById("phone").value = data.phone
+
+    }
+
+})
+
+</script>
+
+</body>
+</html>
