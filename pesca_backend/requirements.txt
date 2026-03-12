@@ -13,3 +13,5 @@ whitenoise==6.12.0
 sqlparse==0.5.5
 google-cloud-storage==2.16.0
 google-auth==2.29.0
+google-cloud-vision
+gunicorn
