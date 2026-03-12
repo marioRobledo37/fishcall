@@ -62,7 +62,10 @@ def capture_sync(request):
                 approved=False
             )
 
-            return JsonResponse({"status": "ok"})
+            return JsonResponse({
+                "status": "ok",
+                "photo": str(photo)
+            })
 
         except Registration.DoesNotExist:
 
