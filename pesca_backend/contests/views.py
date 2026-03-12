@@ -48,6 +48,33 @@ def capture_sync(request):
         photo = request.FILES.get("photo")
 
         print("FOTO RECIBIDA:", photo)
+
+        try:
+
+            reg = Registration.objects.get(
+                contest_id=contest_id,
+                competitor_number=number
+            )
+
+            Capture.objects.create(
+                fisher=reg.fisher,
+                contest=reg.contest,
+                species=species,
+                length_cm=int(length),
+                photo=photo
+            )
+
+            return JsonResponse({"status": "ok"})
+
+        except Registration.DoesNotExist:
+
+            return JsonResponse(
+                {"error": "competitor not found"},
+                status=404
+            )
+
+    return JsonResponse({"error": "invalid method"}, status=400)
+
 # ============================
 # LIVE BOARD
 # ============================
