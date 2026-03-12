@@ -56,6 +56,11 @@ path(
     "api/fisher-lookup/",
     views.fisher_lookup_dni,
     name="fisher_lookup_dni"
+),
+
+path(
+    "api/fishers/<int:contest_id>/",
+    views.fishers_api
 )
 
 ]

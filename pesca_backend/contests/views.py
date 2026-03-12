@@ -41,7 +41,8 @@ def capture_sync(request):
         number = request.POST.get("number")
         species = request.POST.get("species")
         length = request.POST.get("length_cm")
-        photo = request.FILES.get("photo")   # ← FOTO
+
+        photo = request.FILES.get("photo")   # ← ESTA LINEA ES CLAVE
 
         try:
 
@@ -55,7 +56,7 @@ def capture_sync(request):
                 contest=reg.contest,
                 species=species,
                 length_cm=int(length),
-                photo=photo,                 # ← GUARDAR FOTO
+                photo=photo,                # ← GUARDAR FOTO
                 approved=False
             )
 
@@ -431,3 +432,18 @@ def fisher_lookup_dni(request):
 
     except Fisher.DoesNotExist:
         return JsonResponse({"found": False})
+    
+    
+def fishers_api(request, contest_id):
+
+    regs = Registration.objects.filter(contest_id=contest_id)
+
+    data = []
+
+    for r in regs:
+        data.append({
+            "number": r.competitor_number,
+            "name": r.fisher.full_name
+        })
+
+    return JsonResponse(data, safe=False)
