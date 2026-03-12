@@ -37,45 +37,17 @@ def capture_sync(request):
 
     if request.method == "POST":
 
+        print("POST:", request.POST)
+        print("FILES:", request.FILES)
+
         contest_id = request.POST.get("contest_id")
         number = request.POST.get("number")
         species = request.POST.get("species")
         length = request.POST.get("length_cm")
 
-        photo = request.FILES.get("photo")   # ← ESTA LINEA ES CLAVE
+        photo = request.FILES.get("photo")
 
         print("FOTO RECIBIDA:", photo)
-
-        try:
-
-            reg = Registration.objects.get(
-                contest_id=contest_id,
-                competitor_number=number
-            )
-
-            Capture.objects.create(
-                fisher=reg.fisher,
-                contest=reg.contest,
-                species=species,
-                length_cm=int(length),
-                photo=photo,                # ← GUARDAR FOTO
-                approved=False
-            )
-
-            return JsonResponse({
-                "status": "ok",
-                "photo": str(photo)
-            })
-
-        except Registration.DoesNotExist:
-
-            return JsonResponse(
-                {"error": "competitor not found"},
-                status=404
-            )
-
-    return JsonResponse({"error": "invalid method"}, status=400)
-
 # ============================
 # LIVE BOARD
 # ============================
