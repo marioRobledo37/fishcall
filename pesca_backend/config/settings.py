@@ -159,7 +159,7 @@ else:
     )
 
 GS_PROJECT_ID = "grand-signifier-471712-m5"
-GS_DEFAULT_ACL = None
+GS_DEFAULT_ACL = "publicRead"
 GS_FILE_OVERWRITE = False
 
 
