@@ -9,7 +9,7 @@ from io import BytesIO
 from django.core.files import File
 
 from users.models import Fisher
-from .fish_ai import detect_species
+#from .fish_ai import detect_species
 from .fish_measure import measure_fish
 
 
@@ -301,18 +301,18 @@ class Capture(models.Model):
 
         super().save(*args, **kwargs)
 
-        if self.photo and not self.length_cm:
-
-            try:
-
-                measured = measure_fish(self.photo.url)
-
-                if measured:
-                    self.length_cm = measured
-                    super().save(update_fields=["length_cm"])
-
-            except Exception as e:
-                print("ERROR MEDICION:", e)
+#        if self.photo and not self.length_cm:
+#
+#            try:
+#
+#                measured = measure_fish(self.photo.url)
+#
+#                if measured:
+#                    self.length_cm = measured
+#                    super().save(update_fields=["length_cm"])
+#
+#            except Exception as e:
+#                print("ERROR MEDICION:", e)
 
         if self.photo and not self.species:
 
