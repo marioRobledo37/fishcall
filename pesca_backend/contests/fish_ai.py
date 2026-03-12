@@ -1,24 +1,12 @@
 from google.cloud import vision
 from google.oauth2 import service_account
 import os
-import json
 
-# ===============================
-# CREDENCIALES GOOGLE
-# ===============================
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
-if "SERVICE_ACCOUNT_JSON" in os.environ:
+client = None
 
-    credentials = service_account.Credentials.from_service_account_info(
-        json.loads(os.environ["SERVICE_ACCOUNT_JSON"])
-    )
-
-    client = vision.ImageAnnotatorClient(credentials=credentials)
-
-else:
-
-    # fallback local
-    BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+try:
 
     credentials = service_account.Credentials.from_service_account_file(
         os.path.join(BASE_DIR, "credentials/service_account.json")
@@ -26,12 +14,15 @@ else:
 
     client = vision.ImageAnnotatorClient(credentials=credentials)
 
+except Exception as e:
 
-# ===============================
-# DETECCION DE ESPECIE
-# ===============================
+    print("VISION API DESACTIVADA:", e)
+
 
 def detect_species(image_url):
+
+    if client is None:
+        return "Pez"
 
     try:
 
