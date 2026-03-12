@@ -44,6 +44,8 @@ def capture_sync(request):
 
         photo = request.FILES.get("photo")   # ← ESTA LINEA ES CLAVE
 
+        print("FOTO RECIBIDA:", photo)
+
         try:
 
             reg = Registration.objects.get(
