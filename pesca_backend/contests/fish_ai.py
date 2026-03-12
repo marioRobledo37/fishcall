@@ -1,16 +1,35 @@
 from google.cloud import vision
 from google.oauth2 import service_account
 import os
+import json
 
-# ruta a tu credencial
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+# ===============================
+# CREDENCIALES GOOGLE
+# ===============================
 
-credentials = service_account.Credentials.from_service_account_file(
-    os.path.join(BASE_DIR, "credentials/service_account.json")
-)
+if "SERVICE_ACCOUNT_JSON" in os.environ:
 
-client = vision.ImageAnnotatorClient(credentials=credentials)
+    credentials = service_account.Credentials.from_service_account_info(
+        json.loads(os.environ["SERVICE_ACCOUNT_JSON"])
+    )
 
+    client = vision.ImageAnnotatorClient(credentials=credentials)
+
+else:
+
+    # fallback local
+    BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+
+    credentials = service_account.Credentials.from_service_account_file(
+        os.path.join(BASE_DIR, "credentials/service_account.json")
+    )
+
+    client = vision.ImageAnnotatorClient(credentials=credentials)
+
+
+# ===============================
+# DETECCION DE ESPECIE
+# ===============================
 
 def detect_species(image_url):
 
