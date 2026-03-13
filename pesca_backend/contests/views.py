@@ -47,6 +47,10 @@ def capture_sync(request):
 
         photo = request.FILES.get("photo")
 
+        print("POST:", request.POST)
+        print("FILES:", request.FILES)
+        print("PHOTO:", photo)
+
         print("FOTO RECIBIDA:", photo)
 
         try:
