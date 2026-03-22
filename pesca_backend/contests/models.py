@@ -9,8 +9,20 @@ from io import BytesIO
 from django.core.files import File
 
 from users.models import Fisher
-#from .fish_ai import detect_species
-from .fish_measure import measure_fish
+
+# ===============================
+# IMPORTS SEGUROS (NO ROMPEN EN PRODUCCIÓN)
+# ===============================
+
+try:
+    from .fish_ai import detect_species
+except ImportError:
+    detect_species = None
+
+try:
+    from .fish_measure import measure_fish
+except ImportError:
+    measure_fish = None
 
 
 # ===============================
@@ -18,9 +30,7 @@ from .fish_measure import measure_fish
 # ===============================
 
 class PushSubscription(models.Model):
-
     subscription = models.JSONField()
-
     created_at = models.DateTimeField(auto_now_add=True)
 
 
@@ -59,21 +69,18 @@ class Contest(models.Model):
         default="DRAFT"
     )
 
-    # modo del torneo
     mode = models.CharField(
         max_length=10,
         choices=MODE_CHOICES,
         default="SELF"
     )
 
-    # costo de inscripción
     entry_fee = models.DecimalField(
         max_digits=10,
         decimal_places=2,
         default=0
     )
 
-    # link mágico
     join_code = models.CharField(
         max_length=10,
         unique=True,
@@ -82,40 +89,27 @@ class Contest(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
-    # ===============================
-    # GENERAR CÓDIGO DE INVITACIÓN
-    # ===============================
-
     def save(self, *args, **kwargs):
-
         if not self.join_code:
             self.join_code = uuid.uuid4().hex[:6].upper()
-
         super().save(*args, **kwargs)
 
-    # ===============================
-    # MÉTRICAS DEL TORNEO
-    # ===============================
-
     def total_centimeters(self):
-
         return (
             self.captures
-            .filter(approved=True)
+            .filter(status="approved")
             .aggregate(total=Sum("length_cm"))["total"] or 0
         )
 
     def biggest_capture(self):
-
         return (
             self.captures
-            .filter(approved=True)
+            .filter(status="approved")
             .order_by("-length_cm")
             .first()
         )
 
     def ranking(self):
-
         return (
             Fisher.objects
             .filter(registrations__contest=self)
@@ -124,14 +118,14 @@ class Contest(models.Model):
                     "capture__length_cm",
                     filter=Q(
                         capture__contest=self,
-                        capture__approved=True
+                        capture__status="approved"
                     )
                 ),
                 total_captures=Count(
                     "capture",
                     filter=Q(
                         capture__contest=self,
-                        capture__approved=True
+                        capture__status="approved"
                     )
                 )
             )
@@ -159,13 +153,10 @@ class Sponsor(models.Model):
     )
 
     name = models.CharField(max_length=200)
-
     logo = models.ImageField(upload_to="sponsors/")
 
     is_main = models.BooleanField(default=False)
-
     active = models.BooleanField(default=True)
-
     order = models.IntegerField(default=0)
 
     class Meta:
@@ -199,10 +190,7 @@ class Registration(models.Model):
         related_name="registrations"
     )
 
-    competitor_number = models.IntegerField(
-        null=True,
-        blank=True
-    )
+    competitor_number = models.IntegerField(null=True, blank=True)
 
     payment_status = models.CharField(
         max_length=10,
@@ -225,11 +213,9 @@ class Registration(models.Model):
         return f"{self.fisher} - {self.contest}"
 
     def save(self, *args, **kwargs):
-
         super().save(*args, **kwargs)
 
         if not self.qr_code and self.competitor_number:
-
             qr_data = f"C{self.contest.id}-P{self.competitor_number}"
 
             qr = qrcode.make(qr_data)
@@ -240,7 +226,6 @@ class Registration(models.Model):
             file_name = f"qr_{self.contest.id}_{self.competitor_number}.png"
 
             self.qr_code.save(file_name, File(buffer), save=False)
-
             super().save(update_fields=["qr_code"])
 
 
@@ -264,15 +249,9 @@ class Capture(models.Model):
         related_name="captures"
     )
 
-    species = models.CharField(
-        max_length=50,
-        blank=True
-    )
+    species = models.CharField(max_length=50, blank=True)
 
-    length_cm = models.IntegerField(
-        null=True,
-        blank=True
-    )
+    length_cm = models.IntegerField(null=True, blank=True)
 
     photo = models.ImageField(
         upload_to="captures/",
@@ -298,37 +277,31 @@ class Capture(models.Model):
         ordering = ["-created_at"]
 
     def save(self, *args, **kwargs):
-
         super().save(*args, **kwargs)
 
-#        if self.photo and not self.length_cm:
-#
-#            try:
-#
-#                measured = measure_fish(self.photo.url)
-#
-#                if measured:
-#                    self.length_cm = measured
-#                    super().save(update_fields=["length_cm"])
-#
-#            except Exception as e:
-#                print("ERROR MEDICION:", e)
-
-        if self.photo and not self.species:
-
+        # ===============================
+        # MEDICIÓN AUTOMÁTICA (SI EXISTE)
+        # ===============================
+        if self.photo and not self.length_cm and measure_fish:
             try:
+                measured = measure_fish(self.photo.url)
+                if measured:
+                    self.length_cm = measured
+                    super().save(update_fields=["length_cm"])
+            except Exception as e:
+                print("ERROR MEDICION:", e)
 
+        # ===============================
+        # DETECCIÓN DE ESPECIE (SI EXISTE)
+        # ===============================
+        if self.photo and not self.species and detect_species:
+            try:
                 species_detected = detect_species(self.photo.url)
-
-                if species_detected != "Desconocido":
-
+                if species_detected and species_detected != "Desconocido":
                     self.species = species_detected
                     super().save(update_fields=["species"])
-
             except Exception as e:
                 print("ERROR ESPECIE:", e)
 
     def __str__(self):
         return f"{self.fisher.full_name} - {self.length_cm} cm"
-    
-    
