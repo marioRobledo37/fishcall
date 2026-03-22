@@ -146,6 +146,8 @@ STORAGES = {
 
 GS_BUCKET_NAME = "fishcall-media"
 
+DEFAULT_FILE_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"
+
 if "SERVICE_ACCOUNT_JSON" in os.environ:
 
     GS_CREDENTIALS = service_account.Credentials.from_service_account_info(
@@ -161,6 +163,7 @@ else:
 GS_PROJECT_ID = "grand-signifier-471712-m5"
 GS_DEFAULT_ACL = "publicRead"
 GS_FILE_OVERWRITE = False
+
 
 
 # URL pública de media
