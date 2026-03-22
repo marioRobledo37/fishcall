@@ -17,9 +17,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-j93hfgt&=^qj^5sa9eic2$=43q=e-8z*s$ku2ddxuw9o0&=05i'
 
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ['fishcall.onrender.com']
 
 
 # ===============================
