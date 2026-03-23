@@ -73,6 +73,38 @@ h1 {
     overflow-x: auto;
 }
 
+
+.sponsors {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  background: black;
+  padding: 10px 0;
+  overflow: hidden;
+}
+
+.sponsors-track {
+  display: inline-block;
+  white-space: nowrap;
+  animation: scroll 20s linear infinite;
+}
+
+.sponsors-track img {
+  display: inline-block;
+  height: 60px;
+  margin: 0 20px;
+}
+
+@keyframes scroll {
+  from {
+    transform: translateX(0%);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+
 </style>
 </head>
 
@@ -116,10 +148,18 @@ h1 {
 </div>
 
 <!-- SPONSORS -->
+
+
 <div class="sponsors">
+  <div class="sponsors-track">
     {% for s in sponsors %}
-        <span>{{ s.name }}</span>
+      <img src="{{ s.logo.url }}" alt="{{ s.name }}" style="height: 60px; margin: 0 20px;">
     {% endfor %}
+    <!-- Repetir para el loop fluido -->
+    {% for s in sponsors %}
+      <img src="{{ s.logo.url }}" alt="{{ s.name }}" style="height: 60px; margin: 0 20px;">
+    {% endfor %}
+  </div>
 </div>
 
 <!-- AUTO REFRESH -->
