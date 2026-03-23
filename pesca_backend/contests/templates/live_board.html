@@ -1,31 +1,133 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Live</title>
+<meta charset="UTF-8">
+<title>{{ contest.name }}</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0b132b;
+    color: white;
+}
+
+.container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    height: 100vh;
+}
+
+.left {
+    padding: 20px;
+}
+
+.right {
+    background: #1c2541;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+h1 {
+    font-size: 40px;
+    margin-bottom: 20px;
+    color: #00d4ff;
+}
+
+.section-title {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.capture {
+    background: #1c2541;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    font-size: 20px;
+}
+
+.ranking-item {
+    display: flex;
+    justify-content: space-between;
+    background: #3a506b;
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+}
+
+.first {
+    background: gold;
+    color: black;
+    font-weight: bold;
+}
+
+.sponsors {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background: black;
+    padding: 10px;
+    display: flex;
+    gap: 30px;
+    overflow-x: auto;
+}
+
+</style>
 </head>
+
 <body>
 
-<h1>{{ contest.name }}</h1>
+<div class="container">
 
-<h2>Capturas</h2>
+    <!-- IZQUIERDA -->
+    <div class="left">
 
-{% if captures %}
-    {% for c in captures %}
-        <p>{{ c.fisher.full_name }} - {{ c.length_cm }} cm</p>
-    {% endfor %}
-{% else %}
-    <p>No hay capturas</p>
-{% endif %}
+        <h1>{{ contest.name }}</h1>
 
-<h2>Sponsors</h2>
+        <div class="section-title">🎣 Últimas capturas</div>
 
-{% if sponsors %}
+        {% for c in captures %}
+            <div class="capture">
+                {{ c.fisher.full_name }} - {{ c.length_cm }} cm - {{ c.species }}
+            </div>
+        {% empty %}
+            <p>No hay capturas aún</p>
+        {% endfor %}
+
+    </div>
+
+    <!-- DERECHA -->
+    <div class="right">
+
+        <div class="section-title">🏆 Ranking</div>
+
+        {% for r in ranking %}
+            <div class="ranking-item {% if forloop.first %}first{% endif %}">
+                <span>{{ r.full_name }}</span>
+                <span>{{ r.total_points|default:0 }} pts</span>
+            </div>
+        {% empty %}
+            <p>Sin ranking aún</p>
+        {% endfor %}
+
+    </div>
+
+</div>
+
+<!-- SPONSORS -->
+<div class="sponsors">
     {% for s in sponsors %}
-        <p>{{ s.name }}</p>
+        <span>{{ s.name }}</span>
     {% endfor %}
-{% else %}
-    <p>No hay sponsors</p>
-{% endif %}
+</div>
+
+<!-- AUTO REFRESH -->
+<script>
+setTimeout(() => {
+    location.reload();
+}, 5000);
+</script>
 
 </body>
 </html>

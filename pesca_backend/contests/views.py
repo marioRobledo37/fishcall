@@ -88,9 +88,9 @@ def live_board(request, contest_id):
     contest = get_object_or_404(Contest, id=contest_id)
 
     captures = Capture.objects.filter(
-    contest=contest,
-    status="approved"
-)
+        contest=contest,
+        status="approved"
+    ).order_by("-created_at")[:10]
 
     sponsors = (
         Sponsor.objects
@@ -100,6 +100,8 @@ def live_board(request, contest_id):
 
     main_sponsor = sponsors.filter(is_main=True).first()
 
+    ranking = contest.ranking()
+
     return render(
         request,
         "live_board.html",
@@ -107,10 +109,10 @@ def live_board(request, contest_id):
             "contest": contest,
             "captures": captures,
             "sponsors": sponsors,
-            "main_sponsor": main_sponsor
+            "main_sponsor": main_sponsor,
+            "ranking": ranking
         }
     )
-
 
 # ============================
 # BROADCAST PRO
