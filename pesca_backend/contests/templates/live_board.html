@@ -136,10 +136,10 @@ h1 {
 
         {% for r in ranking %}
             <div class="ranking-item {% if forloop.first %}first{% endif %}">
-                <span>{{ forloop.counter }}. {{ r.full_name }}</span>
+                <span>{{ r.full_name }}</span>
                 <span>{{ r.total_points|default:0 }} pts</span>
             </div>
-            {% empty %}
+        {% empty %}
             <p>Sin ranking aún</p>
         {% endfor %}
 
