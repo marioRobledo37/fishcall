@@ -21,6 +21,13 @@ DEBUG = False
 
 ALLOWED_HOSTS = ['fishcall.onrender.com']
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://fishcall.onrender.com"
+]
+
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+
 
 # ===============================
 # APPLICATIONS
