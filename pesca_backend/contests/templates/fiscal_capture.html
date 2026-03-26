@@ -5,11 +5,9 @@
 
 <link rel="manifest" href="/static/manifest.json">
 <meta name="theme-color" content="#0b132b">
-
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-
 body{
 font-family:Arial;
 padding:20px;
@@ -61,7 +59,6 @@ border-radius:50%;
 object-fit:cover;
 border:4px solid #5bc0be;
 }
-
 </style>
 
 </head>
@@ -71,16 +68,9 @@ border:4px solid #5bc0be;
 <h2>🎣 Registrar captura</h2>
 
 <form method="post" enctype="multipart/form-data">
-
 {% csrf_token %}
 
-<!-- NUMERO PESCADOR -->
-
-<input
-id="competitor_number"
-name="number"
-placeholder="Número pescador"
->
+<input id="competitor_number" name="number" placeholder="Número pescador">
 
 <button type="button" onclick="iniciarScanner()">
 📷 Escanear QR
@@ -88,63 +78,24 @@ placeholder="Número pescador"
 
 <div id="reader"></div>
 
-<!-- TARJETA PESCADOR -->
-
 <div id="fisher_card" style="display:none">
-
 <img id="fisher_photo">
-
 <h3 id="fisher_name"></h3>
-
 <p id="fisher_club"></p>
-
 </div>
 
-<!-- MEDIDA -->
+<input id="length_cm" name="length_cm" placeholder="Medida cm" type="number">
 
-<input
-id="length_cm"
-name="length_cm"
-placeholder="Medida cm"
-type="number"
->
-
-<!-- ESPECIE -->
-
-<input
-id="species"
-name="species"
-placeholder="Especie"
->
+<input id="species" name="species" placeholder="Especie">
 
 <div class="species-buttons">
-
-<button type="button" onclick="setSpecies('Surubí')">
-🐟 Surubí
-</button>
-
-<button type="button" onclick="setSpecies('Boga')">
-🐟 Boga
-</button>
-
-<button type="button" onclick="setSpecies('Dorado')">
-🐟 Dorado
-</button>
-
-<button type="button" onclick="setSpecies('Bagre')">
-🐟 Bagre
-</button>
-
+<button type="button" onclick="setSpecies('Surubí')">🐟 Surubí</button>
+<button type="button" onclick="setSpecies('Boga')">🐟 Boga</button>
+<button type="button" onclick="setSpecies('Dorado')">🐟 Dorado</button>
+<button type="button" onclick="setSpecies('Bagre')">🐟 Bagre</button>
 </div>
 
-<!-- FOTO -->
-
-<input
-name="photo"
-type="file"
-accept="image/*"
-capture="environment"
->
+<input name="photo" type="file" accept="image/*" capture="environment">
 
 <button type="submit">
 Guardar captura
@@ -153,6 +104,23 @@ Guardar captura
 </form>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
+
+<!-- 🔥 CSRF TOKEN FUNCTION -->
+<script>
+function getCSRFToken() {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.startsWith('csrftoken=')) {
+                cookieValue = decodeURIComponent(cookie.substring('csrftoken='.length));
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
 
 <script>
 
@@ -163,54 +131,37 @@ document.getElementById("species").value = species;
 }
 
 function iniciarScanner(){
-
 let scanner = new Html5QrcodeScanner(
 "reader",
 { fps: 10, qrbox: 250 }
 );
-
 scanner.render(onScanSuccess);
-
 }
 
 function onScanSuccess(decodedText){
-
-// QR formato C1-P125
-
 let parts = decodedText.split("-P");
-
 if(parts.length === 2){
-
 let numero = parts[1];
-
 document.getElementById("competitor_number").value = numero;
-
 buscarPescador();
-
 }
-
 }
 
 document
 .getElementById("competitor_number")
 .addEventListener("change", buscarPescador);
 
-
 function buscarPescador(){
 
 let numero = document.getElementById("competitor_number").value;
 
 fetch(`/contest/${contestId}/fisher_lookup/?number=${numero}`)
-
 .then(response => response.json())
-
 .then(data => {
 
 if(data.error){
-
 document.getElementById("fisher_card").style.display="none";
 return;
-
 }
 
 document.getElementById("fisher_name").innerText =
@@ -232,33 +183,16 @@ document.getElementById("fisher_card").style.display="block";
 </script>
 
 <script>
-
-function hayInternet(){
-    return navigator.onLine;
-}
-
-</script>
-
-<script>
-
 document.querySelector("form").addEventListener("submit", function(e){
-
-    if(!navigator.onLine){
-
-        e.preventDefault();
-
-        guardarOffline();
-
-        alert("📡 Sin internet. Captura guardada offline.");
-
-    }
-
+if(!navigator.onLine){
+e.preventDefault();
+guardarOffline();
+alert("📡 Sin internet. Captura guardada offline.");
+}
 });
-
 </script>
 
 <script>
-
 function guardarOffline(){
 
 let number = document.getElementById("competitor_number").value;
@@ -278,9 +212,7 @@ localStorage.setItem(
     "capturas_pendientes",
     JSON.stringify(capturas)
 );
-
 }
-
 </script>
 
 <script>
@@ -297,10 +229,11 @@ if(capturas.length === 0){
 
 capturas.forEach(c => {
 
-fetch("/api/capture_sync/",{
+fetch("/api/capture-sync/",{
     method:"POST",
     headers:{
-        "Content-Type":"application/json"
+        "Content-Type":"application/json",
+        "X-CSRFToken": getCSRFToken()
     },
     body:JSON.stringify(c)
 });
@@ -318,46 +251,30 @@ alert("✔ Capturas sincronizadas");
 <script>
 
 if ("serviceWorker" in navigator) {
-
-navigator.serviceWorker
-.register("/static/sw.js")
+navigator.serviceWorker.register("/static/sw.js")
 .then(function(){
-
 console.log("Service Worker registrado");
-
 });
-
 }
 
 </script>
-
-<link rel="stylesheet"
-href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
 
 navigator.serviceWorker.ready.then(function(reg){
 
 reg.pushManager.subscribe({
-
 userVisibleOnly:true,
-
 applicationServerKey:"{{ VAPID_PUBLIC_KEY }}"
-
 }).then(function(sub){
 
-fetch("/save_subscription/",{
-
+fetch("/api/save-subscription/",{
 method:"POST",
-
 headers:{
-"Content-Type":"application/json"
+"Content-Type":"application/json",
+"X-CSRFToken": getCSRFToken()
 },
-
 body:JSON.stringify(sub)
-
 });
 
 });
